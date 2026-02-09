@@ -1,9 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Member, BobnikEvent } from '@/hooks/useBobnikStore';
 
 interface UndoToastProps {
-  event: BobnikEvent;
-  member: Member | undefined;
+  event: { id: string; memberId: string; createdAt: Date };
+  member: { id: string; name: string; emoji: string; color: string } | undefined;
   onUndo: () => void;
   onDismiss: () => void;
 }
@@ -12,7 +11,6 @@ export function UndoToast({ event, member, onUndo, onDismiss }: UndoToastProps) 
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    // Trigger entrance animation
     requestAnimationFrame(() => setVisible(true));
   }, []);
 

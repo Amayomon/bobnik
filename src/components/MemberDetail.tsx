@@ -1,10 +1,9 @@
-import { Member, BobnikEvent } from '@/hooks/useBobnikStore';
 import { format } from 'date-fns';
 import { cs } from 'date-fns/locale';
 
 interface MemberDetailProps {
-  member: Member;
-  todayEvents: BobnikEvent[];
+  member: { id: string; name: string; emoji: string; color: string };
+  todayEvents: { id: string; memberId: string; createdAt: Date }[];
   weekCounts: { date: Date; count: number }[];
   streak: number;
   avg7: string;
@@ -29,7 +28,6 @@ export function MemberDetail({
         className="w-full max-w-md bg-card rounded-t-2xl p-5 pb-8 animate-slide-up shadow-xl"
         onClick={e => e.stopPropagation()}
       >
-        {/* Header */}
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <span className="text-3xl">{member.emoji}</span>
@@ -39,14 +37,13 @@ export function MemberDetail({
           <button onClick={onClose} className="text-muted-foreground text-xl p-1">✕</button>
         </div>
 
-        {/* Today timeline */}
         <div className="mb-5">
           <h3 className="text-sm font-semibold text-muted-foreground mb-2">Dnes</h3>
           {todayEvents.length === 0 ? (
             <p className="text-sm text-muted-foreground italic">Zatím žádný bobník 🧐</p>
           ) : (
             <div className="flex flex-wrap gap-2">
-              {todayEvents.map((ev, i) => (
+              {todayEvents.map(ev => (
                 <div key={ev.id} className="flex items-center gap-1 bg-primary/10 text-primary text-xs font-medium px-2.5 py-1 rounded-full">
                   💩 {format(ev.createdAt, 'HH:mm')}
                 </div>
@@ -55,7 +52,6 @@ export function MemberDetail({
           )}
         </div>
 
-        {/* Week chart */}
         <div className="mb-5">
           <h3 className="text-sm font-semibold text-muted-foreground mb-2">Posledních 7 dní</h3>
           <div className="flex items-end gap-1.5 h-20">
@@ -75,7 +71,6 @@ export function MemberDetail({
           </div>
         </div>
 
-        {/* Stats row */}
         <div className="grid grid-cols-3 gap-2">
           <div className="bg-stats-bg rounded-lg p-2.5 text-center">
             <div className="text-[10px] font-bold text-muted-foreground uppercase">Streak</div>
