@@ -1,8 +1,7 @@
-import { Member } from '@/hooks/useBobnikStore';
 import { useState, useMemo } from 'react';
 
 interface StatsScreenProps {
-  members: Member[];
+  members: { id: string; name: string; emoji: string; color: string }[];
   getCountInRange: (memberId: string, days: number) => number;
   getAllTimeCount: (memberId: string) => number;
   getStreak: (memberId: string) => number;
@@ -12,14 +11,7 @@ interface StatsScreenProps {
 
 type Period = 'today' | '7' | '30' | 'all';
 
-export function StatsScreen({
-  members,
-  getCountInRange,
-  getAllTimeCount,
-  getStreak,
-  getHeatmapData,
-  onClose,
-}: StatsScreenProps) {
+export function StatsScreen({ members, getCountInRange, getAllTimeCount, getStreak, getHeatmapData, onClose }: StatsScreenProps) {
   const [period, setPeriod] = useState<Period>('7');
   const [heatmapMember, setHeatmapMember] = useState<string | null>(null);
 
@@ -30,9 +22,7 @@ export function StatsScreen({
       if (period === '30') return getCountInRange(mid, 30);
       return getAllTimeCount(mid);
     };
-    return [...members]
-      .map(m => ({ ...m, count: getCount(m.id) }))
-      .sort((a, b) => b.count - a.count);
+    return [...members].map(m => ({ ...m, count: getCount(m.id) })).sort((a, b) => b.count - a.count);
   }, [members, period, getCountInRange, getAllTimeCount]);
 
   const heatmap = useMemo(() => getHeatmapData(heatmapMember, 90), [heatmapMember, getHeatmapData]);
@@ -48,22 +38,18 @@ export function StatsScreen({
   return (
     <div className="fixed inset-0 z-40 bg-background overflow-y-auto">
       <div className="max-w-md mx-auto p-4">
-        {/* Header */}
         <div className="flex items-center justify-between mb-5">
           <h1 className="text-xl font-bold text-foreground">📊 Statistiky</h1>
           <button onClick={onClose} className="text-muted-foreground text-xl p-1">✕</button>
         </div>
 
-        {/* Period tabs */}
         <div className="flex gap-1 bg-muted rounded-lg p-1 mb-4">
           {periods.map(p => (
             <button
               key={p.key}
               onClick={() => setPeriod(p.key)}
               className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${
-                period === p.key
-                  ? 'bg-primary text-primary-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
+                period === p.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
               {p.label}
@@ -71,7 +57,6 @@ export function StatsScreen({
           ))}
         </div>
 
-        {/* Leaderboard */}
         <div className="mb-6">
           <h2 className="text-sm font-bold text-muted-foreground mb-2 uppercase tracking-wide">Žebříček</h2>
           <div className="space-y-1.5">
@@ -89,36 +74,27 @@ export function StatsScreen({
           </div>
         </div>
 
-        {/* Member stats */}
         <div className="mb-6">
           <h2 className="text-sm font-bold text-muted-foreground mb-2 uppercase tracking-wide">Přehledy</h2>
           <div className="space-y-1.5">
-            {members.map(m => {
-              const avg7 = (getCountInRange(m.id, 7) / 7).toFixed(1);
-              const avg30 = (getCountInRange(m.id, 30) / 30).toFixed(1);
-              const streak = getStreak(m.id);
-              return (
-                <div key={m.id} className="bg-card rounded-lg px-3 py-2.5">
-                  <div className="flex items-center gap-2 mb-1.5">
-                    <span className="text-lg">{m.emoji}</span>
-                    <span className="font-semibold text-foreground">{m.name}</span>
-                  </div>
-                  <div className="flex gap-4 text-xs text-muted-foreground">
-                    <span>Ø7: <b className="text-foreground">{avg7}</b>/den</span>
-                    <span>Ø30: <b className="text-foreground">{avg30}</b>/den</span>
-                    <span>🔥 <b className="text-foreground">{streak}</b> dní</span>
-                  </div>
+            {members.map(m => (
+              <div key={m.id} className="bg-card rounded-lg px-3 py-2.5">
+                <div className="flex items-center gap-2 mb-1.5">
+                  <span className="text-lg">{m.emoji}</span>
+                  <span className="font-semibold text-foreground">{m.name}</span>
                 </div>
-              );
-            })}
+                <div className="flex gap-4 text-xs text-muted-foreground">
+                  <span>Ø7: <b className="text-foreground">{(getCountInRange(m.id, 7) / 7).toFixed(1)}</b>/den</span>
+                  <span>Ø30: <b className="text-foreground">{(getCountInRange(m.id, 30) / 30).toFixed(1)}</b>/den</span>
+                  <span>🔥 <b className="text-foreground">{getStreak(m.id)}</b> dní</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {/* Heatmap */}
         <div className="mb-6">
-          <div className="flex items-center justify-between mb-2">
-            <h2 className="text-sm font-bold text-muted-foreground uppercase tracking-wide">Heatmapa (90 dní)</h2>
-          </div>
+          <h2 className="text-sm font-bold text-muted-foreground mb-2 uppercase tracking-wide">Heatmapa (90 dní)</h2>
           <div className="flex gap-1.5 flex-wrap mb-3">
             <button
               onClick={() => setHeatmapMember(null)}
@@ -148,10 +124,9 @@ export function StatsScreen({
                   key={i}
                   className="aspect-square rounded-sm"
                   style={{
-                    backgroundColor:
-                      day.count === 0
-                        ? 'hsl(var(--dot-empty))'
-                        : `hsl(var(--dot-filled) / ${0.25 + intensity * 0.75})`,
+                    backgroundColor: day.count === 0
+                      ? 'hsl(var(--dot-empty))'
+                      : `hsl(var(--dot-filled) / ${0.25 + intensity * 0.75})`,
                   }}
                   title={`${day.date.toLocaleDateString('cs')}: ${day.count}`}
                 />

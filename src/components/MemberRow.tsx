@@ -1,14 +1,13 @@
-import { Member } from '@/hooks/useBobnikStore';
-import { useLongPress } from '@/hooks/useLongPress';
-import { useState } from 'react';
-
 interface MemberRowProps {
-  member: Member;
+  member: { id: string; name: string; emoji: string; color: string };
   todayCount: number;
-  weekDots: boolean[]; // 7 booleans, last = today
+  weekDots: boolean[];
   onLongPress: () => void;
   onTap: () => void;
 }
+
+import { useLongPress } from '@/hooks/useLongPress';
+import { useState } from 'react';
 
 export function MemberRow({ member, todayCount, weekDots, onLongPress, onTap }: MemberRowProps) {
   const [bumping, setBumping] = useState(false);
@@ -30,41 +29,29 @@ export function MemberRow({ member, todayCount, weekDots, onLongPress, onTap }: 
       } press-scale`}
       style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
     >
-      {/* Avatar + Name */}
       <div className="flex items-center gap-2 flex-1 min-w-0">
-        <span className="text-2xl" role="img" aria-label={member.name}>
-          {member.emoji}
-        </span>
+        <span className="text-2xl" role="img">{member.emoji}</span>
         <span className="font-semibold text-foreground truncate">{member.name}</span>
         <span className="text-lg">💩</span>
       </div>
 
-      {/* Right side: count + dots */}
       <div className="flex flex-col items-end gap-1.5">
-        {/* Count badge */}
         <div className="flex items-center gap-2">
           <span className="text-xs font-medium text-primary px-2 py-0.5 rounded-full bg-primary/10">
             +1 Bobník
           </span>
-          <span
-            className={`text-xl font-bold text-foreground tabular-nums ${
-              bumping ? 'animate-count-bump' : ''
-            }`}
-          >
+          <span className={`text-xl font-bold text-foreground tabular-nums ${bumping ? 'animate-count-bump' : ''}`}>
             {todayCount}
           </span>
         </div>
 
-        {/* 7-day dots */}
         <div className="flex gap-1 items-center">
           {weekDots.map((filled, i) => {
             const isToday = i === weekDots.length - 1;
             return (
               <div
                 key={i}
-                className={`rounded-full ${
-                  filled ? 'bg-dot-filled' : 'bg-dot-empty'
-                } ${isToday ? 'w-2.5 h-2.5' : 'w-2 h-2'}`}
+                className={`rounded-full ${filled ? 'bg-dot-filled' : 'bg-dot-empty'} ${isToday ? 'w-2.5 h-2.5' : 'w-2 h-2'}`}
               />
             );
           })}
