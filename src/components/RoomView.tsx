@@ -6,6 +6,7 @@ import { StatsBar } from '@/components/StatsBar';
 import { UndoToast } from '@/components/UndoToast';
 import { MemberDetail } from '@/components/MemberDetail';
 import { StatsScreen } from '@/components/StatsScreen';
+import { RoomActivityLog } from '@/components/RoomActivityLog';
 
 interface RoomViewProps {
   roomId: string;
@@ -18,6 +19,7 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [showStats, setShowStats] = useState(false);
   const [showInvite, setShowInvite] = useState(false);
+  const [showActivity, setShowActivity] = useState(false);
   const [copied, setCopied] = useState(false);
 
   const last7Days = store.getLast7Days();
@@ -64,6 +66,13 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
                 title="Pozvat"
               >
                 🔗
+              </button>
+              <button
+                onClick={() => setShowActivity(true)}
+                className="text-primary-foreground/80 hover:text-primary-foreground text-lg transition-colors"
+                title="Aktivita"
+              >
+                📋
               </button>
               <button
                 onClick={() => setShowStats(true)}
@@ -159,6 +168,13 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
               memberId: e.member_id,
               createdAt: new Date(e.created_at),
             }))}
+            allEvents={store.events
+              .filter(e => e.member_id === selectedMember.id)
+              .map(e => ({
+                id: e.id,
+                memberId: e.member_id,
+                createdAt: new Date(e.created_at),
+              }))}
             weekCounts={last7Days.map(d => ({
               date: d,
               count: store.getDayCount(selectedMember.id, d),
@@ -179,6 +195,15 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
             getStreak={store.getStreak}
             getHeatmapData={store.getHeatmapData}
             onClose={() => setShowStats(false)}
+          />
+        )}
+
+        {/* Activity log */}
+        {showActivity && (
+          <RoomActivityLog
+            events={store.events}
+            members={store.members.map(m => ({ id: m.id, name: m.name, emoji: m.emoji }))}
+            onClose={() => setShowActivity(false)}
           />
         )}
       </div>
