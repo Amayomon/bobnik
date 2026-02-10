@@ -88,22 +88,23 @@ export function RoomLobby({ onRoomJoined }: RoomLobbyProps) {
     setLoading(true);
     setError('');
 
-    // Create room
-    const { data: room, error: roomError } = await supabase
-      .from('rooms')
-      .insert({ name: roomName.trim(), created_by: user!.id })
-      .select()
-      .single();
+    // Generate a UUID client-side so we can insert room without needing SELECT back
+    const roomId = crypto.randomUUID();
 
-    if (roomError || !room) {
+    // Create room
+    const { error: roomError } = await supabase
+      .from('rooms')
+      .insert({ id: roomId, name: roomName.trim(), created_by: user!.id });
+
+    if (roomError) {
       setError(roomError?.message ?? 'Chyba při vytváření místnosti');
       setLoading(false);
       return;
     }
 
-    // Add creator as member
+    // Add creator as member (this makes the user a room member, enabling SELECT)
     const { error: memberError } = await supabase.from('members').insert({
-      room_id: room.id,
+      room_id: roomId,
       user_id: user!.id,
       name: memberName.trim(),
       emoji,
@@ -115,7 +116,7 @@ export function RoomLobby({ onRoomJoined }: RoomLobbyProps) {
       return;
     }
 
-    onRoomJoined(room.id);
+    onRoomJoined(roomId);
     setLoading(false);
   };
 
