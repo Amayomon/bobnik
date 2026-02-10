@@ -1,9 +1,10 @@
-import { format } from 'date-fns';
+import { format, isToday, isYesterday } from 'date-fns';
 import { cs } from 'date-fns/locale';
 
 interface MemberDetailProps {
   member: { id: string; name: string; emoji: string; color: string };
   todayEvents: { id: string; memberId: string; createdAt: Date }[];
+  allEvents: { id: string; memberId: string; createdAt: Date }[];
   weekCounts: { date: Date; count: number }[];
   streak: number;
   avg7: string;
@@ -11,9 +12,29 @@ interface MemberDetailProps {
   onClose: () => void;
 }
 
+function groupEventsByDay(events: { id: string; memberId: string; createdAt: Date }[]) {
+  const groups: { key: string; label: string; events: typeof events }[] = [];
+  const sorted = [...events].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+  for (const ev of sorted) {
+    const dayKey = format(ev.createdAt, 'yyyy-MM-dd');
+    let group = groups.find(g => g.key === dayKey);
+    if (!group) {
+      let label: string;
+      if (isToday(ev.createdAt)) label = 'Dnes';
+      else if (isYesterday(ev.createdAt)) label = 'Včera';
+      else label = format(ev.createdAt, 'd. MMMM yyyy', { locale: cs });
+      group = { key: dayKey, label, events: [] };
+      groups.push(group);
+    }
+    group.events.push(ev);
+  }
+  return groups;
+}
+
 export function MemberDetail({
   member,
   todayEvents,
+  allEvents,
   weekCounts,
   streak,
   avg7,
@@ -22,10 +43,18 @@ export function MemberDetail({
 }: MemberDetailProps) {
   const maxWeekCount = Math.max(...weekCounts.map(d => d.count), 1);
 
+  // Show last 30 days of events grouped by day
+  const recentEvents = allEvents.filter(e => {
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 30);
+    return e.createdAt >= cutoff;
+  });
+  const grouped = groupEventsByDay(recentEvents);
+
   return (
     <div className="fixed inset-0 z-40 flex items-end justify-center bg-foreground/20 backdrop-blur-sm" onClick={onClose}>
       <div
-        className="w-full max-w-md bg-card rounded-t-2xl p-5 pb-8 animate-slide-up shadow-xl"
+        className="w-full max-w-md bg-card rounded-t-2xl p-5 pb-8 animate-slide-up shadow-xl max-h-[85vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between mb-4">
@@ -37,23 +66,35 @@ export function MemberDetail({
           <button onClick={onClose} className="text-muted-foreground text-xl p-1">✕</button>
         </div>
 
+        {/* Timeline */}
         <div className="mb-5">
-          <h3 className="text-sm font-semibold text-muted-foreground mb-2">Dnes</h3>
-          {todayEvents.length === 0 ? (
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Časová osa</h3>
+          {grouped.length === 0 ? (
             <p className="text-sm text-muted-foreground italic">Zatím žádný bobník 🧐</p>
           ) : (
-            <div className="flex flex-wrap gap-2">
-              {todayEvents.map(ev => (
-                <div key={ev.id} className="flex items-center gap-1 bg-primary/10 text-primary text-xs font-medium px-2.5 py-1 rounded-full">
-                  💩 {format(ev.createdAt, 'HH:mm')}
+            <div className="space-y-3">
+              {grouped.map(group => (
+                <div key={group.key}>
+                  <p className="text-[11px] font-semibold text-muted-foreground mb-1">{group.label}</p>
+                  <div className="space-y-0.5">
+                    {group.events.map(ev => (
+                      <div key={ev.id} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-muted/50">
+                        <span className="text-xs text-muted-foreground tabular-nums w-10">
+                          {format(ev.createdAt, 'HH:mm')}
+                        </span>
+                        <span className="text-sm text-foreground">+1 záznam</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
 
+        {/* Week chart */}
         <div className="mb-5">
-          <h3 className="text-sm font-semibold text-muted-foreground mb-2">Posledních 7 dní</h3>
+          <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Posledních 7 dní</h3>
           <div className="flex items-end gap-1.5 h-20">
             {weekCounts.map((day, i) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-1">
@@ -72,15 +113,15 @@ export function MemberDetail({
         </div>
 
         <div className="grid grid-cols-3 gap-2">
-          <div className="bg-stats-bg rounded-lg p-2.5 text-center">
+          <div className="bg-muted/50 rounded-lg p-2.5 text-center">
             <div className="text-[10px] font-bold text-muted-foreground uppercase">Streak</div>
             <div className="text-lg font-bold text-foreground">🔥 {streak}</div>
           </div>
-          <div className="bg-stats-bg rounded-lg p-2.5 text-center">
+          <div className="bg-muted/50 rounded-lg p-2.5 text-center">
             <div className="text-[10px] font-bold text-muted-foreground uppercase">Ø 7 dní</div>
             <div className="text-lg font-bold text-foreground">{avg7}</div>
           </div>
-          <div className="bg-stats-bg rounded-lg p-2.5 text-center">
+          <div className="bg-muted/50 rounded-lg p-2.5 text-center">
             <div className="text-[10px] font-bold text-muted-foreground uppercase">Ø 30 dní</div>
             <div className="text-lg font-bold text-foreground">{avg30}</div>
           </div>
