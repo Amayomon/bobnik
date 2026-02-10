@@ -16,24 +16,36 @@ export type Database = {
     Tables: {
       events: {
         Row: {
+          consistency: number
           created_at: string
+          effort: number
           id: string
           member_id: string
           room_id: string
+          size: number
+          smell: number
           source: string | null
         }
         Insert: {
+          consistency?: number
           created_at?: string
+          effort?: number
           id?: string
           member_id: string
           room_id: string
+          size?: number
+          smell?: number
           source?: string | null
         }
         Update: {
+          consistency?: number
           created_at?: string
+          effort?: number
           id?: string
           member_id?: string
           room_id?: string
+          size?: number
+          smell?: number
           source?: string | null
         }
         Relationships: [
