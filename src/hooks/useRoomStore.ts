@@ -16,6 +16,10 @@ interface BobnikEvent {
   room_id: string;
   member_id: string;
   created_at: string;
+  consistency: number;
+  smell: number;
+  size: number;
+  effort: number;
 }
 
 function getStartOfDay(date: Date): Date {
@@ -79,8 +83,8 @@ export function useRoomStore(roomId: string | null) {
 
   const myMember = members.find(m => m.user_id === user?.id);
 
-  const addEvent = useCallback(async (memberId: string) => {
-    if (!roomId) return;
+  const addEvent = useCallback(async (memberId: string): Promise<string | null> => {
+    if (!roomId) return null;
     const { data, error } = await supabase
       .from('events')
       .insert({ room_id: roomId, member_id: memberId })
@@ -92,7 +96,9 @@ export function useRoomStore(roomId: string | null) {
       if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
       setUndoEvent(data as BobnikEvent);
       undoTimerRef.current = setTimeout(() => setUndoEvent(null), 15000);
+      return data.id;
     }
+    return null;
   }, [roomId]);
 
   const undoLastEvent = useCallback(async () => {
@@ -105,6 +111,10 @@ export function useRoomStore(roomId: string | null) {
   const dismissUndo = useCallback(() => {
     setUndoEvent(null);
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+  }, []);
+
+  const updateEventRatings = useCallback(async (eventId: string, ratings: { consistency: number; smell: number; size: number; effort: number }) => {
+    await supabase.from('events').update(ratings).eq('id', eventId);
   }, []);
 
   const getTodayCount = useCallback((memberId: string) => {
@@ -188,6 +198,7 @@ export function useRoomStore(roomId: string | null) {
     undoEvent,
     undoLastEvent,
     dismissUndo,
+    updateEventRatings,
     getTodayCount,
     getDayCount,
     getLast7Days,

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { useRoomStore } from '@/hooks/useRoomStore';
 import { useAuth } from '@/hooks/useAuth';
 import { MemberRow } from '@/components/MemberRow';
@@ -7,6 +7,8 @@ import { UndoToast } from '@/components/UndoToast';
 import { MemberDetail } from '@/components/MemberDetail';
 import { StatsScreen } from '@/components/StatsScreen';
 import { RoomActivityLog } from '@/components/RoomActivityLog';
+import { EventRatingPopup } from '@/components/EventRatingPopup';
+import { toast } from 'sonner';
 
 interface RoomViewProps {
   roomId: string;
@@ -21,6 +23,14 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
   const [showInvite, setShowInvite] = useState(false);
   const [showActivity, setShowActivity] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [ratingEventId, setRatingEventId] = useState<string | null>(null);
+
+  const handleAddEvent = useCallback(async (memberId: string) => {
+    const eventId = await store.addEvent(memberId);
+    if (eventId) {
+      setRatingEventId(eventId);
+    }
+  }, [store]);
 
   const last7Days = store.getLast7Days();
   const selectedMember = store.members.find(m => m.id === selectedMemberId);
@@ -118,7 +128,7 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
                   member={{ id: member.id, name: member.name, emoji: member.emoji, color: member.color }}
                   todayCount={todayCount}
                   weekDots={weekDots}
-                  onLongPress={() => store.addEvent(member.id)}
+                  onLongPress={() => handleAddEvent(member.id)}
                   onTap={() => setSelectedMemberId(member.id)}
                 />
               );
@@ -146,8 +156,26 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
           <button onClick={signOut} className="text-xs text-muted-foreground">Odhlásit</button>
         </div>
 
+        {/* Rating popup */}
+        <EventRatingPopup
+          open={!!ratingEventId}
+          onSave={async (ratings) => {
+            if (ratingEventId) {
+              await store.updateEventRatings(ratingEventId, ratings);
+              toast('Uloženo ✓', { duration: 2000 });
+            }
+            setRatingEventId(null);
+          }}
+          onSkip={() => setRatingEventId(null)}
+          onUndo={() => {
+            setRatingEventId(null);
+            store.undoLastEvent();
+          }}
+          canUndo={!!store.undoEvent}
+        />
+
         {/* Undo toast */}
-        {store.undoEvent && (
+        {store.undoEvent && !ratingEventId && (
           <UndoToast
             event={{ id: store.undoEvent.id, memberId: store.undoEvent.member_id, createdAt: new Date(store.undoEvent.created_at) }}
             member={(() => {
@@ -167,6 +195,10 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
               id: e.id,
               memberId: e.member_id,
               createdAt: new Date(e.created_at),
+              consistency: e.consistency,
+              smell: e.smell,
+              size: e.size,
+              effort: e.effort,
             }))}
             allEvents={store.events
               .filter(e => e.member_id === selectedMember.id)
@@ -174,6 +206,10 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
                 id: e.id,
                 memberId: e.member_id,
                 createdAt: new Date(e.created_at),
+                consistency: e.consistency,
+                smell: e.smell,
+                size: e.size,
+                effort: e.effort,
               }))}
             weekCounts={last7Days.map(d => ({
               date: d,

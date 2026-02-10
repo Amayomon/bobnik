@@ -1,10 +1,21 @@
+import { useState } from 'react';
 import { format, isToday, isYesterday } from 'date-fns';
 import { cs } from 'date-fns/locale';
 
+interface EventWithRatings {
+  id: string;
+  memberId: string;
+  createdAt: Date;
+  consistency?: number;
+  smell?: number;
+  size?: number;
+  effort?: number;
+}
+
 interface MemberDetailProps {
   member: { id: string; name: string; emoji: string; color: string };
-  todayEvents: { id: string; memberId: string; createdAt: Date }[];
-  allEvents: { id: string; memberId: string; createdAt: Date }[];
+  todayEvents: EventWithRatings[];
+  allEvents: EventWithRatings[];
   weekCounts: { date: Date; count: number }[];
   streak: number;
   avg7: string;
@@ -12,8 +23,8 @@ interface MemberDetailProps {
   onClose: () => void;
 }
 
-function groupEventsByDay(events: { id: string; memberId: string; createdAt: Date }[]) {
-  const groups: { key: string; label: string; events: typeof events }[] = [];
+function groupEventsByDay(events: EventWithRatings[]) {
+  const groups: { key: string; label: string; events: EventWithRatings[] }[] = [];
   const sorted = [...events].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
   for (const ev of sorted) {
     const dayKey = format(ev.createdAt, 'yyyy-MM-dd');
@@ -29,6 +40,42 @@ function groupEventsByDay(events: { id: string; memberId: string; createdAt: Dat
     group.events.push(ev);
   }
   return groups;
+}
+
+const RATING_LABELS = [
+  { key: 'consistency' as const, abbr: 'K' },
+  { key: 'smell' as const, abbr: 'Z' },
+  { key: 'size' as const, abbr: 'V' },
+  { key: 'effort' as const, abbr: 'Ú' },
+];
+
+function RatingBadges({ event }: { event: EventWithRatings }) {
+  const hasRatings = RATING_LABELS.some(r => (event[r.key] ?? 0) !== 0);
+  const [expanded, setExpanded] = useState(false);
+
+  if (!hasRatings) return null;
+
+  return (
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+      className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+    >
+      {expanded ? (
+        RATING_LABELS.map(r => {
+          const val = event[r.key] ?? 0;
+          if (val === 0) return null;
+          return (
+            <span key={r.key} className="tabular-nums">
+              {r.abbr}:{val > 0 ? `+${val}` : val}
+            </span>
+          );
+        })
+      ) : (
+        <span className="opacity-60">📊</span>
+      )}
+    </button>
+  );
 }
 
 export function MemberDetail({
@@ -82,7 +129,8 @@ export function MemberDetail({
                         <span className="text-xs text-muted-foreground tabular-nums w-10">
                           {format(ev.createdAt, 'HH:mm')}
                         </span>
-                        <span className="text-sm text-foreground">+1 záznam</span>
+                        <span className="text-sm text-foreground flex-1">+1 záznam</span>
+                        <RatingBadges event={ev} />
                       </div>
                     ))}
                   </div>
