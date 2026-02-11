@@ -1,11 +1,7 @@
 import { useState, useMemo } from 'react';
 import { format } from 'date-fns';
 import { cs } from 'date-fns/locale';
-import {
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, Cell,
-} from 'recharts';
-
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from 'recharts';
 interface BobnikEvent {
   id: string;
   member_id: string;
@@ -16,98 +12,140 @@ interface BobnikEvent {
   effort: number;
   notary_present: boolean;
 }
-
 interface StatsScreenProps {
-  members: { id: string; name: string; emoji: string; color: string }[];
+  members: {
+    id: string;
+    name: string;
+    emoji: string;
+    color: string;
+  }[];
   events: BobnikEvent[];
   getCountInRange: (memberId: string, days: number) => number;
   getAllTimeCount: (memberId: string) => number;
   getStreak: (memberId: string) => number;
-  getHeatmapData: (memberId: string | null, days?: number) => { date: Date; count: number }[];
+  getHeatmapData: (memberId: string | null, days?: number) => {
+    date: Date;
+    count: number;
+  }[];
   onClose: () => void;
 }
-
 type Period = 'today' | '7' | '30' | 'all';
-
 function getStartOfDay(date: Date): Date {
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
   return d;
 }
-
-function StatCard({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
-  return (
-    <div className="bg-card rounded-lg p-3 text-center">
+function StatCard({
+  label,
+  value,
+  sub
+}: {
+  label: string;
+  value: string | number;
+  sub?: string;
+}) {
+  return <div className="bg-card rounded-lg p-3 text-center">
       <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">{label}</div>
       <div className="text-lg font-bold text-foreground mt-0.5">{value}</div>
       {sub && <div className="text-[10px] text-muted-foreground">{sub}</div>}
-    </div>
-  );
+    </div>;
 }
-
-export function StatsScreen({ members, events, getCountInRange, getAllTimeCount, getStreak, getHeatmapData, onClose }: StatsScreenProps) {
+export function StatsScreen({
+  members,
+  events,
+  getCountInRange,
+  getAllTimeCount,
+  getStreak,
+  getHeatmapData,
+  onClose
+}: StatsScreenProps) {
   const [period, setPeriod] = useState<Period>('7');
   const [heatmapMember, setHeatmapMember] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<'room' | string>('room');
-
   const periodDays = period === 'today' ? 1 : period === '7' ? 7 : period === '30' ? 30 : 365;
 
   // Room overview cards
   const overview = useMemo(() => {
     const now = new Date();
     const todayStart = getStartOfDay(now);
-    const week = new Date(now); week.setDate(week.getDate() - 7); week.setHours(0, 0, 0, 0);
-    const month = new Date(now); month.setDate(month.getDate() - 30); month.setHours(0, 0, 0, 0);
-
+    const week = new Date(now);
+    week.setDate(week.getDate() - 7);
+    week.setHours(0, 0, 0, 0);
+    const month = new Date(now);
+    month.setDate(month.getDate() - 30);
+    month.setHours(0, 0, 0, 0);
     const todayEvents = events.filter(e => new Date(e.created_at) >= todayStart);
     const weekEvents = events.filter(e => new Date(e.created_at) >= week);
     const monthEvents = events.filter(e => new Date(e.created_at) >= month);
     const notaryCount = monthEvents.filter(e => e.notary_present).length;
-
     return {
       today: todayEvents.length,
       week: weekEvents.length,
       avgPerDay: (weekEvents.length / 7).toFixed(1),
-      notaryRate: monthEvents.length > 0 ? Math.round((notaryCount / monthEvents.length) * 100) : 0,
+      notaryRate: monthEvents.length > 0 ? Math.round(notaryCount / monthEvents.length * 100) : 0
     };
   }, [events]);
 
   // Daily count chart data (last 30 days)
   const dailyChart = useMemo(() => {
     const days = period === 'today' ? 1 : periodDays > 30 ? 30 : periodDays;
-    const data: { date: string; count: number }[] = [];
+    const data: {
+      date: string;
+      count: number;
+    }[] = [];
     for (let i = days - 1; i >= 0; i--) {
-      const d = new Date(); d.setDate(d.getDate() - i);
+      const d = new Date();
+      d.setDate(d.getDate() - i);
       const start = getStartOfDay(d);
-      const end = new Date(start); end.setDate(end.getDate() + 1);
-      const filtered = viewMode === 'room'
-        ? events.filter(e => new Date(e.created_at) >= start && new Date(e.created_at) < end)
-        : events.filter(e => e.member_id === viewMode && new Date(e.created_at) >= start && new Date(e.created_at) < end);
-      data.push({ date: format(start, 'd.M.', { locale: cs }), count: filtered.length });
+      const end = new Date(start);
+      end.setDate(end.getDate() + 1);
+      const filtered = viewMode === 'room' ? events.filter(e => new Date(e.created_at) >= start && new Date(e.created_at) < end) : events.filter(e => e.member_id === viewMode && new Date(e.created_at) >= start && new Date(e.created_at) < end);
+      data.push({
+        date: format(start, 'd.M.', {
+          locale: cs
+        }),
+        count: filtered.length
+      });
     }
     return data;
   }, [events, periodDays, viewMode, period]);
 
   // Attribute averages (last 30 days)
   const attrAvg = useMemo(() => {
-    const cutoff = new Date(); cutoff.setDate(cutoff.getDate() - 30); cutoff.setHours(0, 0, 0, 0);
-    const filtered = viewMode === 'room'
-      ? events.filter(e => new Date(e.created_at) >= cutoff)
-      : events.filter(e => e.member_id === viewMode && new Date(e.created_at) >= cutoff);
-    if (filtered.length === 0) return [
-      { attr: 'Konzistence', avg: 0 }, { attr: 'Zápach', avg: 0 },
-      { attr: 'Velikost', avg: 0 }, { attr: 'Úsilí', avg: 0 },
-    ];
+    const cutoff = new Date();
+    cutoff.setDate(cutoff.getDate() - 30);
+    cutoff.setHours(0, 0, 0, 0);
+    const filtered = viewMode === 'room' ? events.filter(e => new Date(e.created_at) >= cutoff) : events.filter(e => e.member_id === viewMode && new Date(e.created_at) >= cutoff);
+    if (filtered.length === 0) return [{
+      attr: 'Konzistence',
+      avg: 0
+    }, {
+      attr: 'Zápach',
+      avg: 0
+    }, {
+      attr: 'Velikost',
+      avg: 0
+    }, {
+      attr: 'Úsilí',
+      avg: 0
+    }];
     const avg = (key: keyof BobnikEvent) => {
       const sum = filtered.reduce((s, e) => s + (e[key] as number), 0);
       return parseFloat((sum / filtered.length).toFixed(2));
     };
-    return [
-      { attr: 'Konzistence', avg: avg('consistency') },
-      { attr: 'Zápach', avg: avg('smell') },
-      { attr: 'Velikost', avg: avg('size') },
-      { attr: 'Úsilí', avg: avg('effort') },
-    ];
+    return [{
+      attr: 'Konzistence',
+      avg: avg('consistency')
+    }, {
+      attr: 'Zápach',
+      avg: avg('smell')
+    }, {
+      attr: 'Velikost',
+      avg: avg('size')
+    }, {
+      attr: 'Úsilí',
+      avg: avg('effort')
+    }];
   }, [events, viewMode]);
 
   // Leaderboard
@@ -118,21 +156,30 @@ export function StatsScreen({ members, events, getCountInRange, getAllTimeCount,
       if (period === '30') return getCountInRange(mid, 30);
       return getAllTimeCount(mid);
     };
-    return [...members].map(m => ({ ...m, count: getCount(m.id) })).sort((a, b) => b.count - a.count);
+    return [...members].map(m => ({
+      ...m,
+      count: getCount(m.id)
+    })).sort((a, b) => b.count - a.count);
   }, [members, period, getCountInRange, getAllTimeCount]);
-
   const heatmap = useMemo(() => getHeatmapData(heatmapMember, 90), [heatmapMember, getHeatmapData]);
   const maxHeat = Math.max(...heatmap.map(d => d.count), 1);
-
-  const periods: { key: Period; label: string }[] = [
-    { key: 'today', label: 'Dnes' },
-    { key: '7', label: '7 dní' },
-    { key: '30', label: '30 dní' },
-    { key: 'all', label: 'Celkem' },
-  ];
-
-  return (
-    <div className="fixed inset-0 z-40 bg-background overflow-y-auto">
+  const periods: {
+    key: Period;
+    label: string;
+  }[] = [{
+    key: 'today',
+    label: 'Dnes'
+  }, {
+    key: '7',
+    label: '7 dní'
+  }, {
+    key: '30',
+    label: '30 dní'
+  }, {
+    key: 'all',
+    label: 'Celkem'
+  }];
+  return <div className="fixed inset-0 z-40 bg-background overflow-y-auto">
       <div className="max-w-md mx-auto p-4 pb-20">
         <div className="flex items-center justify-between mb-5">
           <h1 className="text-xl font-bold text-foreground">Statistiky</h1>
@@ -141,40 +188,19 @@ export function StatsScreen({ members, events, getCountInRange, getAllTimeCount,
 
         {/* Period filter */}
         <div className="flex gap-1 bg-muted rounded-lg p-1 mb-4">
-          {periods.map(p => (
-            <button
-              key={p.key}
-              onClick={() => setPeriod(p.key)}
-              className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${
-                period === p.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
+          {periods.map(p => <button key={p.key} onClick={() => setPeriod(p.key)} className={`flex-1 text-xs font-semibold py-1.5 rounded-md transition-colors ${period === p.key ? 'bg-primary text-primary-foreground' : 'text-muted-foreground hover:text-foreground'}`}>
               {p.label}
-            </button>
-          ))}
+            </button>)}
         </div>
 
         {/* View mode toggle */}
         <div className="flex gap-1 flex-wrap mb-4">
-          <button
-            onClick={() => setViewMode('room')}
-            className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
-              viewMode === 'room' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-            }`}
-          >
+          <button onClick={() => setViewMode('room')} className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${viewMode === 'room' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
             Místnost
           </button>
-          {members.map(m => (
-            <button
-              key={m.id}
-              onClick={() => setViewMode(m.id)}
-              className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
-                viewMode === m.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-              }`}
-            >
+          {members.map(m => <button key={m.id} onClick={() => setViewMode(m.id)} className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${viewMode === m.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
               {m.emoji} {m.name}
-            </button>
-          ))}
+            </button>)}
         </div>
 
         {/* Overview cards */}
@@ -192,12 +218,22 @@ export function StatsScreen({ members, events, getCountInRange, getAllTimeCount,
             <ResponsiveContainer width="100%" height={160}>
               <LineChart data={dailyChart}>
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                <YAxis allowDecimals={false} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} width={24} />
-                <Tooltip
-                  contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }}
-                  labelStyle={{ color: 'hsl(var(--foreground))' }}
-                />
+                <XAxis dataKey="date" tick={{
+                fontSize: 10,
+                fill: 'hsl(var(--muted-foreground))'
+              }} />
+                <YAxis allowDecimals={false} tick={{
+                fontSize: 10,
+                fill: 'hsl(var(--muted-foreground))'
+              }} width={24} />
+                <Tooltip contentStyle={{
+                background: 'hsl(var(--card))',
+                border: '1px solid hsl(var(--border))',
+                borderRadius: 8,
+                fontSize: 12
+              }} labelStyle={{
+                color: 'hsl(var(--foreground))'
+              }} />
                 <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
@@ -211,15 +247,22 @@ export function StatsScreen({ members, events, getCountInRange, getAllTimeCount,
             <ResponsiveContainer width="100%" height={140}>
               <BarChart data={attrAvg} layout="vertical">
                 <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis type="number" domain={[-3, 3]} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} />
-                <YAxis dataKey="attr" type="category" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} width={70} />
-                <Tooltip
-                  contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }}
-                />
+                <XAxis type="number" domain={[-3, 3]} tick={{
+                fontSize: 10,
+                fill: 'hsl(var(--muted-foreground))'
+              }} />
+                <YAxis dataKey="attr" type="category" tick={{
+                fontSize: 10,
+                fill: 'hsl(var(--muted-foreground))'
+              }} width={70} />
+                <Tooltip contentStyle={{
+                background: 'hsl(var(--card))',
+                border: '1px solid hsl(var(--border))',
+                borderRadius: 8,
+                fontSize: 12
+              }} />
                 <Bar dataKey="avg" radius={[0, 4, 4, 0]}>
-                  {attrAvg.map((entry, i) => (
-                    <Cell key={i} fill={entry.avg >= 0 ? 'hsl(var(--primary))' : 'hsl(var(--destructive))'} />
-                  ))}
+                  {attrAvg.map((entry, i) => <Cell key={i} fill={entry.avg >= 0 ? 'hsl(var(--primary))' : 'hsl(var(--destructive))'} />)}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>
@@ -230,62 +273,37 @@ export function StatsScreen({ members, events, getCountInRange, getAllTimeCount,
         <div className="mb-5">
           <h2 className="text-sm font-bold text-muted-foreground mb-2 uppercase tracking-wide">Žebříček</h2>
           <div className="space-y-1.5">
-            {leaderboard.map((m, i) => (
-              <div key={m.id} className="flex items-center gap-3 bg-card rounded-lg px-3 py-2.5">
+            {leaderboard.map((m, i) => <div key={m.id} className="flex items-center gap-3 bg-card rounded-lg px-3 py-2.5">
                 <span className="text-lg font-bold text-muted-foreground w-6 text-center">
                   {i === 0 ? '🥇' : i === 1 ? '🥈' : i === 2 ? '🥉' : `${i + 1}.`}
                 </span>
                 <span className="text-xl">{m.emoji}</span>
                 <span className="font-semibold text-foreground flex-1">{m.name}</span>
                 <span className="font-bold text-foreground tabular-nums">{m.count}</span>
-              </div>
-            ))}
+              </div>)}
           </div>
         </div>
 
         {/* Heatmap */}
         <div className="mb-6">
-          <h2 className="text-sm font-bold text-muted-foreground mb-2 uppercase tracking-wide">Heatmapa (90 dní)</h2>
+          <h2 className="text-sm font-bold text-muted-foreground mb-2 uppercase tracking-wide">Hnědmapa (90 dní)</h2>
           <div className="flex gap-1.5 flex-wrap mb-3">
-            <button
-              onClick={() => setHeatmapMember(null)}
-              className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
-                heatmapMember === null ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-              }`}
-            >
+            <button onClick={() => setHeatmapMember(null)} className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${heatmapMember === null ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
               Všichni
             </button>
-            {members.map(m => (
-              <button
-                key={m.id}
-                onClick={() => setHeatmapMember(m.id)}
-                className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${
-                  heatmapMember === m.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'
-                }`}
-              >
+            {members.map(m => <button key={m.id} onClick={() => setHeatmapMember(m.id)} className={`text-xs px-2.5 py-1 rounded-full font-medium transition-colors ${heatmapMember === m.id ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}>
                 {m.emoji} {m.name}
-              </button>
-            ))}
+              </button>)}
           </div>
           <div className="grid grid-cols-[repeat(13,1fr)] gap-[3px]">
             {heatmap.map((day, i) => {
-              const intensity = day.count / maxHeat;
-              return (
-                <div
-                  key={i}
-                  className="aspect-square rounded-sm"
-                  style={{
-                    backgroundColor: day.count === 0
-                      ? 'hsl(var(--dot-empty))'
-                      : `hsl(var(--dot-filled) / ${0.25 + intensity * 0.75})`,
-                  }}
-                  title={`${day.date.toLocaleDateString('cs')}: ${day.count}`}
-                />
-              );
-            })}
+            const intensity = day.count / maxHeat;
+            return <div key={i} className="aspect-square rounded-sm" style={{
+              backgroundColor: day.count === 0 ? 'hsl(var(--dot-empty))' : `hsl(var(--dot-filled) / ${0.25 + intensity * 0.75})`
+            }} title={`${day.date.toLocaleDateString('cs')}: ${day.count}`} />;
+          })}
           </div>
         </div>
       </div>
-    </div>
-  );
+    </div>;
 }
