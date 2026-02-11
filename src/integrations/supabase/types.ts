@@ -21,6 +21,7 @@ export type Database = {
           effort: number
           id: string
           member_id: string
+          notary_present: boolean
           room_id: string
           size: number
           smell: number
@@ -32,6 +33,7 @@ export type Database = {
           effort?: number
           id?: string
           member_id: string
+          notary_present?: boolean
           room_id: string
           size?: number
           smell?: number
@@ -43,6 +45,7 @@ export type Database = {
           effort?: number
           id?: string
           member_id?: string
+          notary_present?: boolean
           room_id?: string
           size?: number
           smell?: number

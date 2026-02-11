@@ -199,6 +199,7 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
               smell: e.smell,
               size: e.size,
               effort: e.effort,
+              notaryPresent: e.notary_present,
             }))}
             allEvents={store.events
               .filter(e => e.member_id === selectedMember.id)
@@ -210,6 +211,7 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
                 smell: e.smell,
                 size: e.size,
                 effort: e.effort,
+                notaryPresent: e.notary_present,
               }))}
             weekCounts={last7Days.map(d => ({
               date: d,

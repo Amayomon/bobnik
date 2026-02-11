@@ -20,6 +20,7 @@ interface BobnikEvent {
   smell: number;
   size: number;
   effort: number;
+  notary_present: boolean;
 }
 
 function getStartOfDay(date: Date): Date {
@@ -113,7 +114,7 @@ export function useRoomStore(roomId: string | null) {
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
   }, []);
 
-  const updateEventRatings = useCallback(async (eventId: string, ratings: { consistency: number; smell: number; size: number; effort: number }) => {
+  const updateEventRatings = useCallback(async (eventId: string, ratings: { consistency: number; smell: number; size: number; effort: number; notary_present?: boolean }) => {
     await supabase.from('events').update(ratings).eq('id', eventId);
   }, []);
 
