@@ -1,0 +1,1 @@
+ALTER TABLE public.events ADD COLUMN notary_present boolean NOT NULL DEFAULT false;

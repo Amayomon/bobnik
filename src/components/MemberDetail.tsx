@@ -10,6 +10,7 @@ interface EventWithRatings {
   smell?: number;
   size?: number;
   effort?: number;
+  notaryPresent?: boolean;
 }
 
 interface MemberDetailProps {
@@ -51,9 +52,10 @@ const RATING_LABELS = [
 
 function RatingBadges({ event }: { event: EventWithRatings }) {
   const hasRatings = RATING_LABELS.some(r => (event[r.key] ?? 0) !== 0);
+  const hasAnything = hasRatings || event.notaryPresent;
   const [expanded, setExpanded] = useState(false);
 
-  if (!hasRatings) return null;
+  if (!hasAnything) return null;
 
   return (
     <button
@@ -62,15 +64,20 @@ function RatingBadges({ event }: { event: EventWithRatings }) {
       className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
     >
       {expanded ? (
-        RATING_LABELS.map(r => {
-          const val = event[r.key] ?? 0;
-          if (val === 0) return null;
-          return (
-            <span key={r.key} className="tabular-nums">
-              {r.abbr}:{val > 0 ? `+${val}` : val}
-            </span>
-          );
-        })
+        <>
+          {RATING_LABELS.map(r => {
+            const val = event[r.key] ?? 0;
+            if (val === 0) return null;
+            return (
+              <span key={r.key} className="tabular-nums">
+                {r.abbr}:{val > 0 ? `+${val}` : val}
+              </span>
+            );
+          })}
+          {event.notaryPresent && (
+            <span className="text-muted-foreground border border-border rounded px-1 py-px">Notář</span>
+          )}
+        </>
       ) : (
         <span className="opacity-60">📊</span>
       )}

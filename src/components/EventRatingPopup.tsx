@@ -9,7 +9,7 @@ import {
 
 interface EventRatingPopupProps {
   open: boolean;
-  onSave: (ratings: { consistency: number; smell: number; size: number; effort: number }) => void;
+  onSave: (ratings: { consistency: number; smell: number; size: number; effort: number; notary_present: boolean }) => void;
   onSkip: () => void;
   onUndo: () => void;
   canUndo: boolean;
@@ -76,18 +76,21 @@ export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo }: Even
     size: 0,
     effort: 0,
   });
+  const [notaryPresent, setNotaryPresent] = useState(false);
 
   const updateRating = (key: keyof typeof ratings, value: number) => {
     setRatings(prev => ({ ...prev, [key]: value }));
   };
 
   const handleSave = () => {
-    onSave(ratings);
+    onSave({ ...ratings, notary_present: notaryPresent });
     setRatings({ consistency: 0, smell: 0, size: 0, effort: 0 });
+    setNotaryPresent(false);
   };
 
   const handleSkip = () => {
     setRatings({ consistency: 0, smell: 0, size: 0, effort: 0 });
+    setNotaryPresent(false);
     onSkip();
   };
 
@@ -114,6 +117,17 @@ export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo }: Even
             </div>
           ))}
         </div>
+
+        <label className="flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={notaryPresent}
+            onChange={(e) => setNotaryPresent(e.target.checked)}
+            className="h-4 w-4 rounded border-border accent-primary"
+          />
+          <span className="text-xs font-medium text-foreground">Přítomen notář</span>
+        </label>
+        <p className="text-[10px] text-muted-foreground/60 -mt-2 ml-6">Pro oficiální a historicky doložené záznamy.</p>
 
         <div className="flex gap-2 pt-1">
           <button
