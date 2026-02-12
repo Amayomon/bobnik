@@ -142,7 +142,7 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
               </div>
 
               <p className="text-[11px] text-muted-foreground text-center mt-3 opacity-70">
-                Dlouhým stiskem přidáš +1 bobník 💩
+                Podržením přidáš bobník.
               </p>
             </div>
 
