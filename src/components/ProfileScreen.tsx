@@ -17,6 +17,7 @@ interface BobnikEvent {
   size: number;
   effort: number;
   notary_present: boolean;
+  special_type: string | null;
 }
 
 interface Member {
@@ -78,8 +79,19 @@ export function ProfileScreen({ member, events, streak, onClose, onProfileUpdate
     const notaryCount = myEvents.filter(e => e.notary_present).length;
     const notaryRate = total > 0 ? Math.round((notaryCount / total) * 100) : 0;
 
-    return { total, avgPerDay, bestDay, notaryRate };
-  }, [myEvents]);
+    const angelicCount = myEvents.filter(e => e.special_type === 'angelic').length;
+    const demonicCount = myEvents.filter(e => e.special_type === 'demonic').length;
+    const specialTotal = angelicCount + demonicCount;
+    const specialRate = total > 0 ? Math.round((specialTotal / total) * 100) : 0;
+
+    // Last special event
+    const allMyEvents = events.filter(e => e.member_id === member.id && e.special_type);
+    const lastSpecial = allMyEvents.length > 0
+      ? new Date(allMyEvents.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0].created_at)
+      : null;
+
+    return { total, avgPerDay, bestDay, notaryRate, angelicCount, demonicCount, specialRate, lastSpecial };
+  }, [myEvents, events, member.id]);
 
   // Daily chart (30 days)
   const dailyChart = useMemo(() => {
@@ -211,6 +223,9 @@ export function ProfileScreen({ member, events, streak, onClose, onProfileUpdate
           <StatCard label="Nejlepší den" value={stats.bestDay} />
           <StatCard label="Streak" value={`🔥 ${streak}`} sub="dní v kuse" />
           <StatCard label="Notář" value={`${stats.notaryRate}%`} sub="za 30 dní" />
+          <StatCard label="✨ Andělské" value={stats.angelicCount} sub="za 30 dní" />
+          <StatCard label="🔥 Ďábelské" value={stats.demonicCount} sub="za 30 dní" />
+          <StatCard label="Speciální %" value={`${stats.specialRate}%`} sub={stats.lastSpecial ? `Poslední: ${format(stats.lastSpecial, 'd.M.', { locale: cs })}` : 'Zatím žádné'} />
         </div>
 
         {/* Personal daily chart */}

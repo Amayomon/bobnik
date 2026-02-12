@@ -9,6 +9,8 @@ interface Member {
   name: string;
   emoji: string;
   color: string;
+  aura_type: string | null;
+  aura_expires_at: string | null;
 }
 
 interface BobnikEvent {
@@ -21,6 +23,7 @@ interface BobnikEvent {
   size: number;
   effort: number;
   notary_present: boolean;
+  special_type: string | null;
 }
 
 function getStartOfDay(date: Date): Date {
@@ -114,8 +117,24 @@ export function useRoomStore(roomId: string | null) {
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
   }, []);
 
-  const updateEventRatings = useCallback(async (eventId: string, ratings: { consistency: number; smell: number; size: number; effort: number; notary_present?: boolean }) => {
+  const updateEventRatings = useCallback(async (eventId: string, ratings: { consistency: number; smell: number; size: number; effort: number; notary_present?: boolean; special_type?: string | null }) => {
     await supabase.from('events').update(ratings).eq('id', eventId);
+  }, []);
+
+  const setMemberAura = useCallback(async (memberId: string, auraType: string) => {
+    const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
+    await supabase.from('members').update({ aura_type: auraType, aura_expires_at: expiresAt }).eq('id', memberId);
+    setMembers(prev => prev.map(m => m.id === memberId ? { ...m, aura_type: auraType, aura_expires_at: expiresAt } : m));
+  }, []);
+
+  const clearExpiredAuras = useCallback(() => {
+    const now = new Date();
+    setMembers(prev => prev.map(m => {
+      if (m.aura_type && m.aura_expires_at && new Date(m.aura_expires_at) <= now) {
+        return { ...m, aura_type: null, aura_expires_at: null };
+      }
+      return m;
+    }));
   }, []);
 
   const getTodayCount = useCallback((memberId: string) => {
@@ -200,6 +219,8 @@ export function useRoomStore(roomId: string | null) {
     undoLastEvent,
     dismissUndo,
     updateEventRatings,
+    setMemberAura,
+    clearExpiredAuras,
     getTodayCount,
     getDayCount,
     getLast7Days,

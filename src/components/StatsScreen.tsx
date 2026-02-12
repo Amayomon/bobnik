@@ -11,6 +11,7 @@ interface BobnikEvent {
   size: number;
   effort: number;
   notary_present: boolean;
+  special_type: string | null;
 }
 interface StatsScreenProps {
   members: {
@@ -78,11 +79,15 @@ export function StatsScreen({
     const weekEvents = events.filter(e => new Date(e.created_at) >= week);
     const monthEvents = events.filter(e => new Date(e.created_at) >= month);
     const notaryCount = monthEvents.filter(e => e.notary_present).length;
+    const angelicCount = monthEvents.filter(e => e.special_type === 'angelic').length;
+    const demonicCount = monthEvents.filter(e => e.special_type === 'demonic').length;
     return {
       today: todayEvents.length,
       week: weekEvents.length,
       avgPerDay: (weekEvents.length / 7).toFixed(1),
-      notaryRate: monthEvents.length > 0 ? Math.round(notaryCount / monthEvents.length * 100) : 0
+      notaryRate: monthEvents.length > 0 ? Math.round(notaryCount / monthEvents.length * 100) : 0,
+      angelic: angelicCount,
+      demonic: demonicCount,
     };
   }, [events]);
 
@@ -209,6 +214,8 @@ export function StatsScreen({
           <StatCard label="Posledních 7 dní" value={overview.week} />
           <StatCard label="Ø / den (7d)" value={overview.avgPerDay} />
           <StatCard label="Notář (30d)" value={`${overview.notaryRate}%`} />
+          <StatCard label="✨ Andělské (30d)" value={overview.angelic} />
+          <StatCard label="🔥 Ďábelské (30d)" value={overview.demonic} />
         </div>
 
         {/* Daily chart */}

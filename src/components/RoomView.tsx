@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useRoomStore } from '@/hooks/useRoomStore';
 import { useAuth } from '@/hooks/useAuth';
 import { MemberRow } from '@/components/MemberRow';
@@ -9,6 +9,7 @@ import { StatsScreen } from '@/components/StatsScreen';
 import { ProfileScreen } from '@/components/ProfileScreen';
 import { RoomActivityLog } from '@/components/RoomActivityLog';
 import { EventRatingPopup } from '@/components/EventRatingPopup';
+import { SpecialEventOverlay, determineSpecialType } from '@/components/SpecialEventOverlay';
 import { toast } from 'sonner';
 
 interface RoomViewProps {
@@ -26,12 +27,20 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
   const [showActivity, setShowActivity] = useState(false);
   const [copied, setCopied] = useState(false);
   const [ratingEventId, setRatingEventId] = useState<string | null>(null);
+  const [ratingMemberId, setRatingMemberId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<Tab>('room');
+  const [specialOverlay, setSpecialOverlay] = useState<'angelic' | 'demonic' | null>(null);
+
+  // Clear expired auras on load
+  useEffect(() => {
+    if (!store.loading) store.clearExpiredAuras();
+  }, [store.loading, store.clearExpiredAuras]);
 
   const handleAddEvent = useCallback(async (memberId: string) => {
     const eventId = await store.addEvent(memberId);
     if (eventId) {
       setRatingEventId(eventId);
+      setRatingMemberId(memberId);
     }
   }, [store]);
 
@@ -131,7 +140,13 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
                   return (
                     <MemberRow
                       key={member.id}
-                      member={{ id: member.id, name: member.name, emoji: member.emoji, color: member.color }}
+                      member={{
+                        id: member.id,
+                        name: member.name,
+                        emoji: member.emoji,
+                        color: member.color,
+                        aura_type: member.aura_type && member.aura_expires_at && new Date(member.aura_expires_at) > new Date() ? member.aura_type : null,
+                      }}
                       todayCount={todayCount}
                       weekDots={weekDots}
                       onLongPress={() => handleAddEvent(member.id)}
@@ -213,14 +228,25 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
           open={!!ratingEventId}
           onSave={async (ratings) => {
             if (ratingEventId) {
-              await store.updateEventRatings(ratingEventId, ratings);
+              // Check for special event
+              const special = determineSpecialType(ratings);
+              const updateData = { ...ratings, special_type: special };
+              await store.updateEventRatings(ratingEventId, updateData);
+
+              if (special && ratingMemberId) {
+                await store.setMemberAura(ratingMemberId, special);
+                setSpecialOverlay(special);
+              }
+
               toast('Uloženo ✓', { duration: 2000 });
             }
             setRatingEventId(null);
+            setRatingMemberId(null);
           }}
-          onSkip={() => setRatingEventId(null)}
+          onSkip={() => { setRatingEventId(null); setRatingMemberId(null); }}
           onUndo={() => {
             setRatingEventId(null);
+            setRatingMemberId(null);
             store.undoLastEvent();
           }}
           canUndo={!!store.undoEvent}
@@ -252,6 +278,7 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
               size: e.size,
               effort: e.effort,
               notaryPresent: e.notary_present,
+              specialType: e.special_type,
             }))}
             allEvents={store.events
               .filter(e => e.member_id === selectedMember.id)
@@ -264,6 +291,7 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
                 size: e.size,
                 effort: e.effort,
                 notaryPresent: e.notary_present,
+                specialType: e.special_type,
               }))}
             weekCounts={last7Days.map(d => ({
               date: d,
@@ -282,6 +310,14 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
             events={store.events}
             members={store.members.map(m => ({ id: m.id, name: m.name, emoji: m.emoji }))}
             onClose={() => setShowActivity(false)}
+          />
+        )}
+
+        {/* Special event overlay */}
+        {specialOverlay && (
+          <SpecialEventOverlay
+            type={specialOverlay}
+            onDone={() => setSpecialOverlay(null)}
           />
         )}
       </div>
