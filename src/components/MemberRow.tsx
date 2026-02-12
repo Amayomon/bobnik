@@ -7,6 +7,7 @@ interface MemberRowProps {
     name: string;
     emoji: string;
     color: string;
+    aura_type?: string | null;
   };
   todayCount: number;
   weekDots: boolean[];
@@ -43,16 +44,27 @@ export function MemberRow({
     onShortPress: onTap
   });
 
+  const aura = member.aura_type;
+  const auraClass = aura === 'angelic'
+    ? 'ring-2 ring-[hsl(45_70%_55%)] shadow-[0_0_12px_hsl(45_70%_55%/0.12)] animate-aura-shimmer'
+    : aura === 'demonic'
+      ? 'ring-2 ring-[hsl(0_50%_40%)] animate-aura-pulse'
+      : '';
+
   return (
     <div
       {...handlers}
-      className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer select-none transition-colors duration-150 ${pressing ? 'bg-row-active scale-[0.97]' : 'hover:bg-row-hover'} press-scale`}
+      className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer select-none transition-colors duration-150 ${pressing ? 'bg-row-active scale-[0.97]' : 'hover:bg-row-hover'} press-scale ${auraClass}`}
       style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
     >
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <span className="text-2xl" role="img">{member.emoji}</span>
         <div className="flex flex-col min-w-0">
-          <span className="font-semibold text-foreground truncate">{member.name}</span>
+          <span className="font-semibold text-foreground truncate flex items-center gap-1">
+            {member.name}
+            {aura === 'angelic' && <span className="text-xs opacity-70">😇</span>}
+            {aura === 'demonic' && <span className="text-xs opacity-70">😈</span>}
+          </span>
           <span className="text-xs text-muted-foreground/70 truncate">{getMicroTitle(todayCount)}</span>
         </div>
       </div>

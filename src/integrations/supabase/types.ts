@@ -26,6 +26,7 @@ export type Database = {
           size: number
           smell: number
           source: string | null
+          special_type: string | null
         }
         Insert: {
           consistency?: number
@@ -38,6 +39,7 @@ export type Database = {
           size?: number
           smell?: number
           source?: string | null
+          special_type?: string | null
         }
         Update: {
           consistency?: number
@@ -50,6 +52,7 @@ export type Database = {
           size?: number
           smell?: number
           source?: string | null
+          special_type?: string | null
         }
         Relationships: [
           {
@@ -70,6 +73,8 @@ export type Database = {
       }
       members: {
         Row: {
+          aura_expires_at: string | null
+          aura_type: string | null
           color: string
           created_at: string
           emoji: string
@@ -79,6 +84,8 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          aura_expires_at?: string | null
+          aura_type?: string | null
           color?: string
           created_at?: string
           emoji?: string
@@ -88,6 +95,8 @@ export type Database = {
           user_id: string
         }
         Update: {
+          aura_expires_at?: string | null
+          aura_type?: string | null
           color?: string
           created_at?: string
           emoji?: string

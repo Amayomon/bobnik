@@ -11,6 +11,7 @@ interface EventWithRatings {
   size?: number;
   effort?: number;
   notaryPresent?: boolean;
+  specialType?: string | null;
 }
 
 interface MemberDetailProps {
@@ -76,6 +77,12 @@ function RatingBadges({ event }: { event: EventWithRatings }) {
           })}
           {event.notaryPresent && (
             <span className="text-muted-foreground border border-border rounded px-1 py-px">Notář</span>
+          )}
+          {event.specialType === 'angelic' && (
+            <span className="text-[hsl(45_60%_40%)] border border-[hsl(45_60%_70%)] rounded px-1 py-px">✨ Andělská</span>
+          )}
+          {event.specialType === 'demonic' && (
+            <span className="text-[hsl(0_50%_45%)] border border-[hsl(0_40%_65%)] rounded px-1 py-px">🔥 Ďábelská</span>
           )}
         </>
       ) : (
