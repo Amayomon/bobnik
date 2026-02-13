@@ -1,0 +1,48 @@
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '@/components/ui/sheet';
+
+interface HamburgerMenuProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onNavigate: (target: 'room' | 'log' | 'stats' | 'profile' | 'invite' | 'settings') => void;
+}
+
+const menuItems: { key: 'room' | 'log' | 'stats' | 'profile' | 'invite' | 'settings'; icon: string; label: string }[] = [
+  { key: 'room', icon: '🏠', label: 'Místnost' },
+  { key: 'log', icon: '📋', label: 'Log' },
+  { key: 'stats', icon: '📊', label: 'Statistiky' },
+  { key: 'profile', icon: '👤', label: 'Profil' },
+  { key: 'invite', icon: '🔗', label: 'Pozvat člena' },
+  { key: 'settings', icon: '⚙️', label: 'Nastavení' },
+];
+
+export function HamburgerMenu({ open, onOpenChange, onNavigate }: HamburgerMenuProps) {
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-64 p-0">
+        <SheetHeader className="px-5 pt-5 pb-3">
+          <SheetTitle className="text-base font-bold text-foreground">Menu</SheetTitle>
+        </SheetHeader>
+        <nav className="flex flex-col">
+          {menuItems.map(item => (
+            <button
+              key={item.key}
+              onClick={() => {
+                onNavigate(item.key);
+                onOpenChange(false);
+              }}
+              className="flex items-center gap-3 px-5 py-3 text-sm font-medium text-foreground hover:bg-muted transition-colors text-left"
+            >
+              <span className="text-lg">{item.icon}</span>
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </nav>
+      </SheetContent>
+    </Sheet>
+  );
+}
