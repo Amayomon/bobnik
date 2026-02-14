@@ -1,4 +1,3 @@
-import { useLongPress } from '@/hooks/useLongPress';
 import { useState } from 'react';
 
 interface MemberRowProps {
@@ -11,7 +10,6 @@ interface MemberRowProps {
   };
   todayCount: number;
   weekDots: boolean[];
-  onLongPress: () => void;
   onTap: () => void;
 }
 
@@ -33,22 +31,9 @@ export function MemberRow({
   member,
   todayCount,
   weekDots,
-  onLongPress,
   onTap
 }: MemberRowProps) {
   const [bumping, setBumping] = useState(false);
-  const {
-    pressing,
-    handlers
-  } = useLongPress({
-    threshold: 500,
-    onLongPress: () => {
-      onLongPress();
-      setBumping(true);
-      setTimeout(() => setBumping(false), 300);
-    },
-    onShortPress: onTap
-  });
 
   const aura = member.aura_type;
   const auraClass = aura === 'angelic'
@@ -59,9 +44,8 @@ export function MemberRow({
 
   return (
     <div
-      {...handlers}
-      className={`flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer select-none transition-colors duration-150 ${pressing ? 'bg-row-active scale-[0.97]' : 'hover:bg-row-hover'} press-scale ${auraClass}`}
-      style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
+      onClick={onTap}
+      className={`flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer select-none transition-colors duration-150 hover:bg-row-hover ${auraClass}`}
     >
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <span className="text-2xl" role="img">{member.emoji}</span>

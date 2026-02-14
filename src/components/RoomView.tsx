@@ -47,18 +47,21 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
     }
   }, [store]);
 
-  const handleMenuNavigate = useCallback((target: 'room' | 'log' | 'stats' | 'profile' | 'invite' | 'settings') => {
+  const handleMenuNavigate = useCallback((target: 'room' | 'log' | 'stats' | 'profile' | 'invite' | 'settings' | 'lobby' | 'logout') => {
     if (target === 'invite') {
       setActiveScreen('room');
       setShowInvite(true);
     } else if (target === 'settings') {
-      // Settings placeholder — for now just show toast
       toast('Nastavení brzy přijde', { duration: 2000 });
+    } else if (target === 'lobby') {
+      onLeave();
+    } else if (target === 'logout') {
+      signOut();
     } else {
       setActiveScreen(target);
       setShowInvite(false);
     }
-  }, []);
+  }, [onLeave, signOut]);
 
   const last7Days = store.getLast7Days();
   const selectedMember = store.members.find(m => m.id === selectedMemberId);
@@ -167,18 +170,12 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
                       }}
                       todayCount={todayCount}
                       weekDots={weekDots}
-                      onLongPress={() => handleAddEvent(member.id)}
                       onTap={() => setSelectedMemberId(member.id)}
                     />
                   );
                 })}
               </div>
 
-              {/* Footer links */}
-              <div className="pt-2 flex justify-between items-center">
-                <button onClick={onLeave} className="text-xs text-muted-foreground">← Místnosti</button>
-                <button onClick={signOut} className="text-xs text-muted-foreground">Odhlásit</button>
-              </div>
             </div>
 
             {/* Floating add button */}

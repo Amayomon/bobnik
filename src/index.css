@@ -194,6 +194,11 @@
     50% { box-shadow: 0 0 8px 2px hsl(0 50% 40% / 0.12); }
   }
 
+  @keyframes fab-breathe {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.03); }
+  }
+
   .animate-special-enter {
     animation: special-enter 0.5s ease-out;
   }
