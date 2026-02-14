@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -13,12 +13,54 @@ interface FloatingAddButtonProps {
 
 export function FloatingAddButton({ members, onAddEvent }: FloatingAddButtonProps) {
   const [open, setOpen] = useState(false);
+  const [progress, setProgress] = useState(0);
+  const timerRef = useRef<number | null>(null);
+  const frameRef = useRef<number | null>(null);
+  const startRef = useRef(0);
+  const HOLD_MS = 400;
+
+  const startHold = useCallback(() => {
+    startRef.current = Date.now();
+    const animate = () => {
+      const elapsed = Date.now() - startRef.current;
+      const p = Math.min(elapsed / HOLD_MS, 1);
+      setProgress(p);
+      if (p < 1) {
+        frameRef.current = requestAnimationFrame(animate);
+      }
+    };
+    frameRef.current = requestAnimationFrame(animate);
+    timerRef.current = window.setTimeout(() => {
+      setProgress(0);
+      setOpen(true);
+    }, HOLD_MS);
+  }, []);
+
+  const cancelHold = useCallback(() => {
+    if (timerRef.current) clearTimeout(timerRef.current);
+    if (frameRef.current) cancelAnimationFrame(frameRef.current);
+    timerRef.current = null;
+    frameRef.current = null;
+    setProgress(0);
+  }, []);
+
+  // Interpolate from light beige to darker brown
+  const bgColor = `hsl(28 ${50 + progress * 20}% ${85 - progress * 30}%)`;
 
   return (
     <>
       <button
-        onClick={() => setOpen(true)}
-        className="fixed bottom-28 right-5 z-40 w-14 h-14 rounded-full bg-primary shadow-[0_4px_16px_hsl(var(--primary)/0.35)] flex items-center justify-center text-2xl active:scale-95 transition-transform hover:shadow-[0_6px_20px_hsl(var(--primary)/0.45)]"
+        onPointerDown={startHold}
+        onPointerUp={cancelHold}
+        onPointerLeave={cancelHold}
+        onContextMenu={e => e.preventDefault()}
+        className="fixed bottom-28 right-5 z-40 w-14 h-14 rounded-full flex items-center justify-center text-2xl transition-shadow duration-300 active:scale-95 select-none"
+        style={{
+          backgroundColor: bgColor,
+          boxShadow: `0 4px 16px hsl(28 70% 48% / ${0.2 + progress * 0.15})`,
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+        }}
         aria-label="Přidat bobník"
       >
         💩

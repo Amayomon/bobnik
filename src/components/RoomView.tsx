@@ -91,9 +91,14 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
         {/* Minimal Header – elevated */}
         <div className="header-gradient px-5 py-4 rounded-b-2xl shadow-[0_4px_12px_hsl(var(--foreground)/0.10)]">
           <div className="flex items-center justify-between">
-            <h1 className="text-xl font-extrabold text-primary-foreground tracking-tight">
-              💩 {store.roomName || 'Bobník Tracker'}
-            </h1>
+            <div>
+              <h1 className="text-xl font-extrabold text-primary-foreground tracking-tight">
+                💩 {store.roomName || 'Bobník Tracker'}
+              </h1>
+              <p className="text-[11px] text-primary-foreground/60 font-normal mt-0.5">
+                Kdo dnes kolikrát vysadil šišku?
+              </p>
+            </div>
             <button
               onClick={() => setMenuOpen(true)}
               className="bg-primary-foreground/15 hover:bg-primary-foreground/25 text-primary-foreground text-xl transition-colors p-2 rounded-lg shadow-[0_2px_6px_hsl(var(--foreground)/0.10)]"
@@ -133,7 +138,7 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
               />
 
               {/* Compact subtitle */}
-              <p className="text-xs text-muted-foreground text-center">
+              <p className="text-[11px] text-muted-foreground/70 text-center">
                 Dnes · {store.members.reduce((sum, m) => sum + store.getTodayCount(m.id), 0)} bobníků
               </p>
 

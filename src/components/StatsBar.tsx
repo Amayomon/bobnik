@@ -1,3 +1,5 @@
+import { toast } from 'sonner';
+
 interface StatsBarProps {
   members: { id: string; name: string; emoji: string; color: string }[];
   getCountInRange: (memberId: string, days: number) => number;
@@ -15,17 +17,21 @@ export function StatsBar({ members, getCountInRange, getAllTimeCount, getStreak 
   const avgPerDay = (weeklyTotal / 7).toFixed(1);
   const bestStreak = Math.max(...members.map(m => getStreak(m.id)));
 
+  const showLabel = (label: string) => {
+    toast(label, { duration: 1800 });
+  };
+
   return (
     <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-card rounded-xl shadow-[0_2px_8px_hsl(var(--foreground)/0.06)]">
-      <span className="text-sm font-semibold text-foreground truncate">
+      <button onClick={() => showLabel('Týdenní lídr')} className="text-sm font-semibold text-foreground truncate">
         🏆 1. {weeklyLeader.name}
-      </span>
-      <span className="text-muted-foreground text-xs">|</span>
-      <span className="text-sm text-foreground whitespace-nowrap">📅 {weeklyTotal}</span>
-      <span className="text-muted-foreground text-xs">|</span>
-      <span className="text-sm text-foreground whitespace-nowrap">📊 {avgPerDay}</span>
-      <span className="text-muted-foreground text-xs">|</span>
-      <span className="text-sm text-foreground whitespace-nowrap">🔥 {bestStreak}</span>
+      </button>
+      <span className="text-muted-foreground/40 text-xs">|</span>
+      <button onClick={() => showLabel('Týdenní součet')} className="text-sm text-foreground whitespace-nowrap">📅 {weeklyTotal}</button>
+      <span className="text-muted-foreground/40 text-xs">|</span>
+      <button onClick={() => showLabel('Denní průměr')} className="text-sm text-foreground whitespace-nowrap">📊 {avgPerDay}</button>
+      <span className="text-muted-foreground/40 text-xs">|</span>
+      <button onClick={() => showLabel('Nejdelší série')} className="text-sm text-foreground whitespace-nowrap">🔥 {bestStreak}</button>
     </div>
   );
 }
