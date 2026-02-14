@@ -74,9 +74,17 @@ export function useRoomStore(roomId: string | null) {
         { event: '*', schema: 'public', table: 'events', filter: `room_id=eq.${roomId}` },
         (payload) => {
           if (payload.eventType === 'INSERT') {
-            setEvents(prev => [...prev, payload.new as BobnikEvent]);
+            const newEvent = payload.new as BobnikEvent;
+            setEvents(prev => {
+              // Skip if already present (optimistic or duplicate)
+              if (prev.some(e => e.id === newEvent.id)) return prev;
+              return [...prev, newEvent];
+            });
           } else if (payload.eventType === 'DELETE') {
             setEvents(prev => prev.filter(e => e.id !== (payload.old as any).id));
+          } else if (payload.eventType === 'UPDATE') {
+            const updated = payload.new as BobnikEvent;
+            setEvents(prev => prev.map(e => e.id === updated.id ? updated : e));
           }
         }
       )
@@ -89,6 +97,20 @@ export function useRoomStore(roomId: string | null) {
 
   const addEvent = useCallback(async (memberId: string): Promise<string | null> => {
     if (!roomId) return null;
+
+    // Optimistic event
+    const optimisticId = crypto.randomUUID();
+    const optimisticEvent: BobnikEvent = {
+      id: optimisticId,
+      room_id: roomId,
+      member_id: memberId,
+      created_at: new Date().toISOString(),
+      consistency: 0, smell: 0, size: 0, effort: 0,
+      notary_present: false,
+      special_type: null,
+    };
+    setEvents(prev => [...prev, optimisticEvent]);
+
     const { data, error } = await supabase
       .from('events')
       .insert({ room_id: roomId, member_id: memberId })
@@ -96,13 +118,17 @@ export function useRoomStore(roomId: string | null) {
       .single();
 
     if (data && !error) {
-      // Set undo
+      // Replace optimistic with real
+      setEvents(prev => prev.map(e => e.id === optimisticId ? (data as BobnikEvent) : e));
       if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
       setUndoEvent(data as BobnikEvent);
       undoTimerRef.current = setTimeout(() => setUndoEvent(null), 15000);
       return data.id;
+    } else {
+      // Revert optimistic
+      setEvents(prev => prev.filter(e => e.id !== optimisticId));
+      return null;
     }
-    return null;
   }, [roomId]);
 
   const undoLastEvent = useCallback(async () => {

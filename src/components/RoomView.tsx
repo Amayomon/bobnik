@@ -176,7 +176,7 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
 
             {/* Floating add button */}
             <FloatingAddButton
-              members={store.members.map(m => ({ id: m.id, name: m.name, emoji: m.emoji }))}
+              myMemberId={store.myMember?.id ?? null}
               onAddEvent={handleAddEvent}
             />
 
