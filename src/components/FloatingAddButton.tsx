@@ -63,7 +63,7 @@ export function FloatingAddButton({ myMemberId, onAddEvent }: FloatingAddButtonP
       onPointerUp={cancelHold}
       onPointerLeave={cancelHold}
       onContextMenu={e => e.preventDefault()}
-      className="fixed bottom-28 right-5 z-40 w-14 h-14 rounded-full flex items-center justify-center text-2xl select-none overflow-hidden"
+      className="fixed bottom-28 left-1/2 -translate-x-1/2 z-40 w-16 h-16 rounded-full flex items-center justify-center text-2xl select-none overflow-hidden"
       style={{
         backgroundColor: 'hsl(28 50% 85%)',
         boxShadow: `0 4px 16px hsl(28 70% 48% / ${0.15 + progress * 0.2})`,
@@ -81,7 +81,9 @@ export function FloatingAddButton({ myMemberId, onAddEvent }: FloatingAddButtonP
           transition: progress === 0 ? 'height 0.25s ease-out' : 'none',
         }}
       />
-      <span className="relative z-10">💩</span>
+      <span className="relative z-10 text-2xl" style={{
+        animation: progress > 0 && progress < 1 ? 'fab-breathe 1.5s ease-in-out infinite' : 'none',
+      }}>💩</span>
     </button>
   );
 }
