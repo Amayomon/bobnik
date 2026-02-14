@@ -1,93 +1,87 @@
 import { useState, useRef, useCallback } from 'react';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from '@/components/ui/sheet';
+import { toast } from 'sonner';
 
 interface FloatingAddButtonProps {
-  members: { id: string; name: string; emoji: string }[];
-  onAddEvent: (memberId: string) => void;
+  myMemberId: string | null;
+  onAddEvent: (memberId: string) => Promise<string | null | void>;
 }
 
-export function FloatingAddButton({ members, onAddEvent }: FloatingAddButtonProps) {
-  const [open, setOpen] = useState(false);
+export function FloatingAddButton({ myMemberId, onAddEvent }: FloatingAddButtonProps) {
   const [progress, setProgress] = useState(0);
   const timerRef = useRef<number | null>(null);
   const frameRef = useRef<number | null>(null);
   const startRef = useRef(0);
-  const HOLD_MS = 400;
+  const triggeredRef = useRef(false);
+  const HOLD_MS = 800;
+
+  const triggerAction = useCallback(async () => {
+    if (!myMemberId) return;
+    triggeredRef.current = true;
+    // Haptic feedback
+    if (navigator.vibrate) navigator.vibrate(30);
+    const result = await onAddEvent(myMemberId);
+    if (result !== null && result !== undefined) {
+      toast('Zapsáno.', { duration: 2000 });
+    } else {
+      toast('Zapsáno.', { duration: 2000 });
+    }
+    // Smooth reset
+    setProgress(0);
+  }, [myMemberId, onAddEvent]);
 
   const startHold = useCallback(() => {
+    triggeredRef.current = false;
     startRef.current = Date.now();
     const animate = () => {
       const elapsed = Date.now() - startRef.current;
       const p = Math.min(elapsed / HOLD_MS, 1);
       setProgress(p);
+      if (p >= 1 && !triggeredRef.current) {
+        triggerAction();
+        return;
+      }
       if (p < 1) {
         frameRef.current = requestAnimationFrame(animate);
       }
     };
     frameRef.current = requestAnimationFrame(animate);
-    timerRef.current = window.setTimeout(() => {
-      setProgress(0);
-      setOpen(true);
-    }, HOLD_MS);
-  }, []);
+  }, [triggerAction]);
 
   const cancelHold = useCallback(() => {
-    if (timerRef.current) clearTimeout(timerRef.current);
     if (frameRef.current) cancelAnimationFrame(frameRef.current);
-    timerRef.current = null;
     frameRef.current = null;
-    setProgress(0);
+    if (!triggeredRef.current) {
+      setProgress(0);
+    }
   }, []);
 
-  // Interpolate from light beige to darker brown
-  const bgColor = `hsl(28 ${50 + progress * 20}% ${85 - progress * 30}%)`;
+  const fillHeight = `${progress * 100}%`;
 
   return (
-    <>
-      <button
-        onPointerDown={startHold}
-        onPointerUp={cancelHold}
-        onPointerLeave={cancelHold}
-        onContextMenu={e => e.preventDefault()}
-        className="fixed bottom-28 right-5 z-40 w-14 h-14 rounded-full flex items-center justify-center text-2xl transition-shadow duration-300 active:scale-95 select-none"
+    <button
+      onPointerDown={startHold}
+      onPointerUp={cancelHold}
+      onPointerLeave={cancelHold}
+      onContextMenu={e => e.preventDefault()}
+      className="fixed bottom-28 right-5 z-40 w-14 h-14 rounded-full flex items-center justify-center text-2xl select-none overflow-hidden"
+      style={{
+        backgroundColor: 'hsl(28 50% 85%)',
+        boxShadow: `0 4px 16px hsl(28 70% 48% / ${0.15 + progress * 0.2})`,
+        userSelect: 'none',
+        WebkitUserSelect: 'none',
+      }}
+      aria-label="Přidat bobník"
+    >
+      {/* Fill overlay from bottom to top */}
+      <span
+        className="absolute bottom-0 left-0 w-full rounded-full transition-none pointer-events-none"
         style={{
-          backgroundColor: bgColor,
-          boxShadow: `0 4px 16px hsl(28 70% 48% / ${0.2 + progress * 0.15})`,
-          userSelect: 'none',
-          WebkitUserSelect: 'none',
+          height: fillHeight,
+          backgroundColor: 'hsl(28 55% 42%)',
+          transition: progress === 0 ? 'height 0.25s ease-out' : 'none',
         }}
-        aria-label="Přidat bobník"
-      >
-        💩
-      </button>
-
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="bottom" className="rounded-t-2xl px-4 pb-8 pt-4 max-h-[60vh]">
-          <SheetHeader className="pb-3">
-            <SheetTitle className="text-base font-bold text-foreground">Kdo vysadil šišku?</SheetTitle>
-          </SheetHeader>
-          <div className="flex flex-col gap-1">
-            {members.map(member => (
-              <button
-                key={member.id}
-                onClick={() => {
-                  onAddEvent(member.id);
-                  setOpen(false);
-                }}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-left hover:bg-row-hover active:bg-row-active transition-colors"
-              >
-                <span className="text-2xl">{member.emoji}</span>
-                <span className="font-semibold text-foreground">{member.name}</span>
-              </button>
-            ))}
-          </div>
-        </SheetContent>
-      </Sheet>
-    </>
+      />
+      <span className="relative z-10">💩</span>
+    </button>
   );
 }
