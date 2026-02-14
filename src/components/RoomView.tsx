@@ -12,6 +12,7 @@ import { EventRatingPopup } from '@/components/EventRatingPopup';
 import { SpecialEventOverlay, determineSpecialType } from '@/components/SpecialEventOverlay';
 import { HamburgerMenu } from '@/components/HamburgerMenu';
 import { RecentActivityPanel } from '@/components/RecentActivityPanel';
+import { FloatingAddButton } from '@/components/FloatingAddButton';
 import { toast } from 'sonner';
 
 interface RoomViewProps {
@@ -87,15 +88,15 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
     <div className="min-h-screen bg-background flex justify-center">
       <div className="w-full max-w-md flex flex-col min-h-screen">
 
-        {/* Minimal Header */}
-        <div className="header-gradient px-5 py-4 rounded-b-2xl shadow-md">
+        {/* Minimal Header – elevated */}
+        <div className="header-gradient px-5 py-4 rounded-b-2xl shadow-[0_4px_12px_hsl(var(--foreground)/0.10)]">
           <div className="flex items-center justify-between">
             <h1 className="text-xl font-extrabold text-primary-foreground tracking-tight">
               💩 {store.roomName || 'Bobník Tracker'}
             </h1>
             <button
               onClick={() => setMenuOpen(true)}
-              className="text-primary-foreground/80 hover:text-primary-foreground text-2xl transition-colors p-1"
+              className="bg-primary-foreground/15 hover:bg-primary-foreground/25 text-primary-foreground text-xl transition-colors p-2 rounded-lg shadow-[0_2px_6px_hsl(var(--foreground)/0.10)]"
               title="Menu"
             >
               ☰
@@ -122,15 +123,22 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
         {/* Room screen content */}
         {activeScreen === 'room' && (
           <>
-            <div className="flex-1 px-4 py-4 space-y-1 pb-28">
-              <div className="mb-3">
-                <h2 className="text-lg font-bold text-foreground">Dnešní skóre</h2>
-                <p className="text-sm text-muted-foreground">Kdo dnes kolikrát vysadil šišku?</p>
-              </div>
+            <div className="flex-1 px-4 py-3 space-y-2 pb-32">
+              {/* Compact stats row */}
+              <StatsBar
+                members={membersForStats}
+                getCountInRange={store.getCountInRange}
+                getAllTimeCount={store.getAllTimeCount}
+                getStreak={store.getStreak}
+              />
 
-              <div className="border-t border-border mb-2" />
+              {/* Compact subtitle */}
+              <p className="text-xs text-muted-foreground text-center">
+                Dnes · {store.members.reduce((sum, m) => sum + store.getTodayCount(m.id), 0)} bobníků
+              </p>
 
-              <div className="space-y-0.5">
+              {/* Member list */}
+              <div className="space-y-px">
                 {store.members.map(member => {
                   const todayCount = store.getTodayCount(member.id);
                   const weekDots = last7Days.map(d => store.getDayCount(member.id, d) > 0);
@@ -154,26 +162,18 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
                 })}
               </div>
 
-              <p className="text-[11px] text-muted-foreground text-center mt-3 opacity-70">
-                Podržením přidáš bobník.
-              </p>
-
-              {/* Stats bar */}
-              <div className="pt-3">
-                <StatsBar
-                  members={membersForStats}
-                  getCountInRange={store.getCountInRange}
-                  getAllTimeCount={store.getAllTimeCount}
-                  getStreak={store.getStreak}
-                />
-              </div>
-
               {/* Footer links */}
               <div className="pt-2 flex justify-between items-center">
                 <button onClick={onLeave} className="text-xs text-muted-foreground">← Místnosti</button>
                 <button onClick={signOut} className="text-xs text-muted-foreground">Odhlásit</button>
               </div>
             </div>
+
+            {/* Floating add button */}
+            <FloatingAddButton
+              members={store.members.map(m => ({ id: m.id, name: m.name, emoji: m.emoji }))}
+              onAddEvent={handleAddEvent}
+            />
 
             {/* Persistent activity panel */}
             <RecentActivityPanel
