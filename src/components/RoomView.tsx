@@ -69,6 +69,13 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  // If room failed to load (no access or doesn't exist), go back to lobby
+  useEffect(() => {
+    if (!store.loading && !store.roomName && !store.members.length) {
+      onLeave();
+    }
+  }, [store.loading, store.roomName, store.members.length, onLeave]);
+
   if (store.loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
