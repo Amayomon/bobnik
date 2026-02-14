@@ -54,7 +54,7 @@ export function MemberRow({
   return (
     <div
       {...handlers}
-      className={`flex items-center gap-3 px-4 py-3 rounded-lg cursor-pointer select-none transition-colors duration-150 ${pressing ? 'bg-row-active scale-[0.97]' : 'hover:bg-row-hover'} press-scale ${auraClass}`}
+      className={`flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer select-none transition-colors duration-150 ${pressing ? 'bg-row-active scale-[0.97]' : 'hover:bg-row-hover'} press-scale ${auraClass}`}
       style={{ userSelect: 'none', WebkitUserSelect: 'none' }}
     >
       <div className="flex items-center gap-2 flex-1 min-w-0">
