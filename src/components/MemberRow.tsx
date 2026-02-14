@@ -23,6 +23,12 @@ function getMicroTitle(count: number): string {
   return 'Obléhací specialista';
 }
 
+function getPillTint(count: number): string {
+  if (count >= 4) return 'bg-primary/12';
+  if (count >= 3) return 'bg-primary/10';
+  return 'bg-primary/8';
+}
+
 export function MemberRow({
   member,
   todayCount,
@@ -70,9 +76,10 @@ export function MemberRow({
       </div>
 
       <div className="flex flex-col items-end gap-1.5">
-        <div className="flex items-center bg-primary/8 rounded-full px-3 py-1 gap-2">
+        <div className={`flex items-center rounded-full px-3 py-1 gap-0 ${getPillTint(todayCount)} transition-all duration-300 ${bumping ? 'scale-105' : 'scale-100'}`}>
           <span className="text-[11px] font-medium text-muted-foreground">Denní úroda</span>
-          <span className={`text-lg font-bold text-foreground tabular-nums leading-none ${bumping ? 'animate-count-bump' : ''}`}>
+          <span className="mx-1.5 w-px h-3 bg-muted-foreground/20" />
+          <span className={`text-[13px] font-semibold text-foreground tabular-nums leading-none transition-transform duration-300 ${bumping ? 'animate-count-bump' : ''}`}>
             {todayCount}
           </span>
         </div>
