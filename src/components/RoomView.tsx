@@ -95,8 +95,8 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
   }));
 
   return (
-    <div className="min-h-screen bg-background flex justify-center">
-      <div className="w-full max-w-md flex flex-col min-h-screen">
+    <div className="h-[100dvh] bg-background flex justify-center overflow-hidden">
+      <div className="w-full max-w-md flex flex-col h-full">
 
         {/* Minimal Header – elevated */}
         <div className="header-gradient px-5 py-4 rounded-b-2xl shadow-[0_4px_12px_hsl(var(--foreground)/0.10)]">
@@ -138,17 +138,20 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
         {/* Room screen content */}
         {activeScreen === 'room' && (
           <>
-            <div className="flex-1 px-4 py-3 space-y-2 pb-32">
-              {/* Compact stats row */}
+            {/* Non-scrolling stats row */}
+            <div className="px-4 pt-3 pb-1 shrink-0">
               <StatsBar
                 members={membersForStats}
                 getCountInRange={store.getCountInRange}
                 getAllTimeCount={store.getAllTimeCount}
                 getStreak={store.getStreak}
               />
+            </div>
 
+            {/* Scrollable member list area */}
+            <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-36">
               {/* Compact subtitle */}
-              <p className="text-[11px] text-muted-foreground/70 text-center">
+              <p className="text-[11px] text-muted-foreground/70 text-center py-1">
                 Dnes · {store.members.reduce((sum, m) => sum + store.getTodayCount(m.id), 0)} bobníků
               </p>
 
@@ -175,7 +178,6 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
                   );
                 })}
               </div>
-
             </div>
 
             {/* Floating add button */}
