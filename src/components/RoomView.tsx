@@ -149,15 +149,21 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
             </div>
 
             {/* Scrollable member list area */}
-            <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-36">
+            <div className="flex-1 min-h-0 overflow-y-auto px-4 pb-2">
               {/* Compact subtitle */}
               <p className="text-[11px] text-muted-foreground/70 text-center py-1">
                 Dnes · {store.members.reduce((sum, m) => sum + store.getTodayCount(m.id), 0)} bobníků
               </p>
 
-              {/* Member list */}
+              {/* Member list – sorted by daily count desc, then name asc */}
               <div className="space-y-px">
-                {store.members.map(member => {
+                {[...store.members]
+                  .sort((a, b) => {
+                    const countDiff = store.getTodayCount(b.id) - store.getTodayCount(a.id);
+                    if (countDiff !== 0) return countDiff;
+                    return a.name.localeCompare(b.name);
+                  })
+                  .map(member => {
                   const todayCount = store.getTodayCount(member.id);
                   const weekDots = last7Days.map(d => store.getDayCount(member.id, d) > 0);
 
@@ -180,18 +186,21 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
               </div>
             </div>
 
-            {/* Floating add button */}
-            <FloatingAddButton
-              myMemberId={store.myMember?.id ?? null}
-              onAddEvent={handleAddEvent}
-            />
+            {/* Bottom bar – in layout flow, not overlay */}
+            <div className="shrink-0 relative">
+              {/* FAB positioned above the activity panel */}
+              <FloatingAddButton
+                myMemberId={store.myMember?.id ?? null}
+                onAddEvent={handleAddEvent}
+              />
 
-            {/* Persistent activity panel */}
-            <RecentActivityPanel
-              events={store.events}
-              members={store.members.map(m => ({ id: m.id, name: m.name, emoji: m.emoji }))}
-              onOpenLog={() => setActiveScreen('log')}
-            />
+              {/* Activity panel */}
+              <RecentActivityPanel
+                events={store.events}
+                members={store.members.map(m => ({ id: m.id, name: m.name, emoji: m.emoji }))}
+                onOpenLog={() => setActiveScreen('log')}
+              />
+            </div>
           </>
         )}
 

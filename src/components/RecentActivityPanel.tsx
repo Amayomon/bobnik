@@ -32,9 +32,9 @@ export function RecentActivityPanel({ events, members, onOpenLog }: RecentActivi
   return (
     <div
       onClick={onOpenLog}
-      className="fixed bottom-0 left-0 right-0 z-30 cursor-pointer"
+      className="relative z-30 cursor-pointer"
     >
-      <div className="max-w-md mx-auto bg-card rounded-t-2xl shadow-[0_-4px_16px_hsl(var(--foreground)/0.08)] px-4 py-3">
+      <div className="bg-card rounded-t-2xl shadow-[0_-4px_16px_hsl(var(--foreground)/0.08)] px-4 py-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">
         {/* Header row */}
         <div className="flex items-center justify-between mb-2">
           <span className="text-xs font-semibold text-foreground">📜 Poslední bobníky</span>
