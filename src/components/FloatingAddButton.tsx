@@ -63,7 +63,7 @@ export function FloatingAddButton({ myMemberId, onAddEvent }: FloatingAddButtonP
       onPointerUp={cancelHold}
       onPointerLeave={cancelHold}
       onContextMenu={e => e.preventDefault()}
-      className="fixed bottom-28 left-1/2 -translate-x-1/2 z-40 w-16 h-16 rounded-full flex items-center justify-center text-2xl select-none overflow-hidden"
+      className="absolute -top-20 left-1/2 -translate-x-1/2 z-40 w-16 h-16 rounded-full flex items-center justify-center text-2xl select-none overflow-hidden"
       style={{
         backgroundColor: 'hsl(28 50% 85%)',
         boxShadow: `0 4px 16px hsl(28 70% 48% / ${0.15 + progress * 0.2})`,
