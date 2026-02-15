@@ -65,93 +65,83 @@ export function StatsScreen({
   const [viewMode, setViewMode] = useState<'room' | string>('room');
   const periodDays = period === 'today' ? 1 : period === '7' ? 7 : period === '30' ? 30 : 365;
 
-  // Room overview cards
+  // Scoped + time-filtered events — single source of truth
+  const scopedEvents = useMemo(() => {
+    const scopeFiltered = viewMode === 'room' ? events : events.filter(e => e.member_id === viewMode);
+    const cutoff = new Date();
+    if (period !== 'all') {
+      cutoff.setDate(cutoff.getDate() - periodDays);
+      cutoff.setHours(0, 0, 0, 0);
+      return scopeFiltered.filter(e => new Date(e.created_at) >= cutoff);
+    }
+    return scopeFiltered;
+  }, [events, viewMode, period, periodDays]);
+
+  // KPI cards from scopedEvents
   const overview = useMemo(() => {
     const now = new Date();
     const todayStart = getStartOfDay(now);
+    const todayEvents = scopedEvents.filter(e => new Date(e.created_at) >= todayStart);
+
     const week = new Date(now);
     week.setDate(week.getDate() - 7);
     week.setHours(0, 0, 0, 0);
-    const month = new Date(now);
-    month.setDate(month.getDate() - 30);
-    month.setHours(0, 0, 0, 0);
-    const todayEvents = events.filter(e => new Date(e.created_at) >= todayStart);
-    const weekEvents = events.filter(e => new Date(e.created_at) >= week);
-    const monthEvents = events.filter(e => new Date(e.created_at) >= month);
-    const notaryCount = monthEvents.filter(e => e.notary_present).length;
-    const angelicCount = monthEvents.filter(e => e.special_type === 'angelic').length;
-    const demonicCount = monthEvents.filter(e => e.special_type === 'demonic').length;
+    const weekEvents = scopedEvents.filter(e => new Date(e.created_at) >= week);
+
+    const notaryCount = scopedEvents.filter(e => e.notary_present).length;
+    const angelicCount = scopedEvents.filter(e => e.special_type === 'angelic').length;
+    const demonicCount = scopedEvents.filter(e => e.special_type === 'demonic').length;
+
     return {
       today: todayEvents.length,
       week: weekEvents.length,
       avgPerDay: (weekEvents.length / 7).toFixed(1),
-      notaryRate: monthEvents.length > 0 ? Math.round(notaryCount / monthEvents.length * 100) : 0,
+      notaryRate: scopedEvents.length > 0 ? Math.round(notaryCount / scopedEvents.length * 100) : 0,
       angelic: angelicCount,
       demonic: demonicCount,
+      total: scopedEvents.length,
     };
-  }, [events]);
+  }, [scopedEvents]);
 
-  // Daily count chart data (last 30 days)
+  // Daily count chart data
   const dailyChart = useMemo(() => {
     const days = period === 'today' ? 1 : periodDays > 30 ? 30 : periodDays;
-    const data: {
-      date: string;
-      count: number;
-    }[] = [];
+    const scopeFiltered = viewMode === 'room' ? events : events.filter(e => e.member_id === viewMode);
+    const data: { date: string; count: number }[] = [];
     for (let i = days - 1; i >= 0; i--) {
       const d = new Date();
       d.setDate(d.getDate() - i);
       const start = getStartOfDay(d);
       const end = new Date(start);
       end.setDate(end.getDate() + 1);
-      const filtered = viewMode === 'room' ? events.filter(e => new Date(e.created_at) >= start && new Date(e.created_at) < end) : events.filter(e => e.member_id === viewMode && new Date(e.created_at) >= start && new Date(e.created_at) < end);
+      const filtered = scopeFiltered.filter(e => new Date(e.created_at) >= start && new Date(e.created_at) < end);
       data.push({
-        date: format(start, 'd.M.', {
-          locale: cs
-        }),
+        date: format(start, 'd.M.', { locale: cs }),
         count: filtered.length
       });
     }
     return data;
   }, [events, periodDays, viewMode, period]);
 
-  // Attribute averages (last 30 days)
+  // Attribute averages from scoped events
   const attrAvg = useMemo(() => {
-    const cutoff = new Date();
-    cutoff.setDate(cutoff.getDate() - 30);
-    cutoff.setHours(0, 0, 0, 0);
-    const filtered = viewMode === 'room' ? events.filter(e => new Date(e.created_at) >= cutoff) : events.filter(e => e.member_id === viewMode && new Date(e.created_at) >= cutoff);
-    if (filtered.length === 0) return [{
-      attr: 'Konzistence',
-      avg: 0
-    }, {
-      attr: 'Zápach',
-      avg: 0
-    }, {
-      attr: 'Velikost',
-      avg: 0
-    }, {
-      attr: 'Úsilí',
-      avg: 0
-    }];
+    if (scopedEvents.length === 0) return [
+      { attr: 'Konzistence', avg: 0 },
+      { attr: 'Zápach', avg: 0 },
+      { attr: 'Velikost', avg: 0 },
+      { attr: 'Úsilí', avg: 0 },
+    ];
     const avg = (key: keyof BobnikEvent) => {
-      const sum = filtered.reduce((s, e) => s + (e[key] as number), 0);
-      return parseFloat((sum / filtered.length).toFixed(2));
+      const sum = scopedEvents.reduce((s, e) => s + (e[key] as number), 0);
+      return parseFloat((sum / scopedEvents.length).toFixed(2));
     };
-    return [{
-      attr: 'Konzistence',
-      avg: avg('consistency')
-    }, {
-      attr: 'Zápach',
-      avg: avg('smell')
-    }, {
-      attr: 'Velikost',
-      avg: avg('size')
-    }, {
-      attr: 'Úsilí',
-      avg: avg('effort')
-    }];
-  }, [events, viewMode]);
+    return [
+      { attr: 'Konzistence', avg: avg('consistency') },
+      { attr: 'Zápach', avg: avg('smell') },
+      { attr: 'Velikost', avg: avg('size') },
+      { attr: 'Úsilí', avg: avg('effort') },
+    ];
+  }, [scopedEvents]);
 
   // Leaderboard
   const leaderboard = useMemo(() => {
@@ -213,9 +203,9 @@ export function StatsScreen({
           <StatCard label="Dnes" value={overview.today} />
           <StatCard label="Posledních 7 dní" value={overview.week} />
           <StatCard label="Ø / den (7d)" value={overview.avgPerDay} />
-          <StatCard label="Notář (30d)" value={`${overview.notaryRate}%`} />
-          <StatCard label="✨ Andělské (30d)" value={overview.angelic} />
-          <StatCard label="🔥 Ďábelské (30d)" value={overview.demonic} />
+          <StatCard label="Notář" value={`${overview.notaryRate}%`} sub={period === 'all' ? 'celkem' : `${periodDays}d`} />
+          <StatCard label="✨ Andělské" value={overview.angelic} sub={period === 'all' ? 'celkem' : `${periodDays}d`} />
+          <StatCard label="🔥 Ďábelské" value={overview.demonic} sub={period === 'all' ? 'celkem' : `${periodDays}d`} />
         </div>
 
         {/* Daily chart */}
@@ -249,7 +239,7 @@ export function StatsScreen({
 
         {/* Attribute averages */}
         <div className="mb-5">
-          <h2 className="text-sm font-bold text-muted-foreground mb-2 uppercase tracking-wide">Průměr atributů (30d)</h2>
+          <h2 className="text-sm font-bold text-muted-foreground mb-2 uppercase tracking-wide">Průměr atributů {period === 'all' ? '(celkem)' : `(${periodDays}d)`}</h2>
           <div className="bg-card rounded-lg p-3">
             <ResponsiveContainer width="100%" height={140}>
               <BarChart data={attrAvg} layout="vertical">
