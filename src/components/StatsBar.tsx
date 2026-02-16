@@ -2,19 +2,24 @@ import { toast } from 'sonner';
 
 interface StatsBarProps {
   members: { id: string; name: string; emoji: string; color: string }[];
-  getCountInRange: (memberId: string, days: number) => number;
+  getCalendarWeekCount: (memberId: string) => number;
   getAllTimeCount: (memberId: string) => number;
   getStreak: (memberId: string) => number;
 }
 
-export function StatsBar({ members, getCountInRange, getAllTimeCount, getStreak }: StatsBarProps) {
+export function StatsBar({ members, getCalendarWeekCount, getAllTimeCount, getStreak }: StatsBarProps) {
   if (members.length === 0) return null;
 
   const weeklyLeader = [...members].sort(
-    (a, b) => getCountInRange(b.id, 7) - getCountInRange(a.id, 7)
+    (a, b) => getCalendarWeekCount(b.id) - getCalendarWeekCount(a.id)
   )[0];
-  const weeklyTotal = members.reduce((sum, m) => sum + getCountInRange(m.id, 7), 0);
-  const avgPerDay = (weeklyTotal / 7).toFixed(1);
+  const weeklyTotal = members.reduce((sum, m) => sum + getCalendarWeekCount(m.id), 0);
+
+  // Days elapsed this week so far (at least 1)
+  const now = new Date();
+  const day = now.getDay();
+  const daysElapsed = day === 0 ? 7 : day; // Mon=1..Sun=7
+  const avgPerDay = (weeklyTotal / daysElapsed).toFixed(1);
   const bestStreak = Math.max(...members.map(m => getStreak(m.id)));
 
   const showLabel = (label: string) => {
