@@ -201,6 +201,17 @@ export function useRoomStore(roomId: string | null) {
     return events.filter(e => e.member_id === memberId && new Date(e.created_at) >= start).length;
   }, [events]);
 
+  // ISO calendar week (Mon 00:00 – Sun 23:59:59) in user's timezone
+  const getCalendarWeekCount = useCallback((memberId: string) => {
+    const now = new Date();
+    const day = now.getDay(); // 0=Sun,1=Mon...6=Sat
+    const diffToMonday = day === 0 ? 6 : day - 1;
+    const monday = new Date(now);
+    monday.setDate(monday.getDate() - diffToMonday);
+    monday.setHours(0, 0, 0, 0);
+    return events.filter(e => e.member_id === memberId && new Date(e.created_at) >= monday).length;
+  }, [events]);
+
   const getAllTimeCount = useCallback((memberId: string) => {
     return events.filter(e => e.member_id === memberId).length;
   }, [events]);
@@ -252,6 +263,7 @@ export function useRoomStore(roomId: string | null) {
     getLast7Days,
     getEventsForDay,
     getCountInRange,
+    getCalendarWeekCount,
     getAllTimeCount,
     getStreak,
     getHeatmapData,
