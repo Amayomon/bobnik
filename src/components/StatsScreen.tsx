@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef, useEffect, useCallback } from 'react';
 import { format } from 'date-fns';
 import { cs } from 'date-fns/locale';
 import {
@@ -60,6 +60,93 @@ function StatCard({ label, value, sub }: { label: string; value: string | number
       <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{label}</div>
       <div className="text-xl font-bold text-foreground mt-1 tabular-nums">{value}</div>
       {sub && <div className="text-[10px] text-muted-foreground/70 mt-0.5">{sub}</div>}
+    </div>
+  );
+}
+
+/* ── Heatmap grid component (auto-scrolls to right) ── */
+function HeatmapGrid({ grid, dayLabels }: {
+  grid: { grid: (({ date: Date; count: number; isToday: boolean; inRange: boolean }) | null)[][]; numWeeks: number; monthLabels: { label: string; col: number }[]; maxCount: number };
+  dayLabels: string[];
+}) {
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (el) el.scrollLeft = el.scrollWidth;
+  }, [grid]);
+
+  const cellSize = 11;
+  const gap = 3;
+  const gridWidth = grid.numWeeks * (cellSize + gap) - gap;
+
+  return (
+    <div
+      ref={scrollRef}
+      className="bg-card rounded-xl border border-border/60 p-3 mb-6 overflow-x-auto"
+      style={{ scrollbarWidth: 'thin' }}
+    >
+      {/* Month labels */}
+      <div className="flex mb-1" style={{ paddingLeft: 24 }}>
+        <div className="relative" style={{ width: gridWidth, height: 14, minWidth: gridWidth }}>
+          {grid.monthLabels.map((ml, i) => (
+            <span
+              key={i}
+              className="text-[9px] text-muted-foreground absolute whitespace-nowrap"
+              style={{ left: ml.col * (cellSize + gap) }}
+            >
+              {ml.label}
+            </span>
+          ))}
+        </div>
+      </div>
+      {/* Grid */}
+      <div className="flex gap-0">
+        {/* Day labels */}
+        <div className="flex flex-col mr-1 shrink-0" style={{ width: 20, gap }}>
+          {dayLabels.map((l, i) => (
+            <div key={i} className="text-[8px] text-muted-foreground/60 flex items-center justify-end" style={{ height: cellSize, width: 20 }}>
+              {l}
+            </div>
+          ))}
+        </div>
+        {/* Cells */}
+        <div
+          className="grid"
+          style={{
+            gridTemplateColumns: `repeat(${grid.numWeeks}, ${cellSize}px)`,
+            gridTemplateRows: `repeat(7, ${cellSize}px)`,
+            gap,
+            minWidth: gridWidth,
+          }}
+        >
+          {Array.from({ length: 7 }).map((_, row) =>
+            Array.from({ length: grid.numWeeks }).map((_, col) => {
+              const cell = grid.grid[row][col];
+              if (!cell) return <div key={`${row}-${col}`} className="rounded-sm" style={{ width: cellSize, height: cellSize }} />;
+              const intensity = cell.count / grid.maxCount;
+              return (
+                <div
+                  key={`${row}-${col}`}
+                  className="rounded-sm"
+                  style={{
+                    width: cellSize,
+                    height: cellSize,
+                    backgroundColor: !cell.inRange
+                      ? 'transparent'
+                      : cell.count === 0
+                        ? 'hsl(var(--dot-empty))'
+                        : `hsl(var(--dot-filled) / ${0.25 + intensity * 0.75})`,
+                    outline: cell.isToday ? '1.5px solid hsl(var(--primary))' : undefined,
+                    outlineOffset: cell.isToday ? -1 : undefined,
+                  }}
+                  title={cell.inRange ? `${cell.date.toLocaleDateString('cs')}: ${cell.count}` : ''}
+                />
+              );
+            })
+          )}
+        </div>
+      </div>
     </div>
   );
 }
@@ -389,64 +476,7 @@ export function StatsScreen({
 
         {/* ── E. Hnědmapa (GitHub-style) ── */}
         <SectionHeader title="Hnědmapa" sub="Intenzita aktivity po jednotlivých dnech." />
-        <div className="bg-card rounded-xl border border-border/60 p-3 mb-6 overflow-x-auto">
-          {/* Month labels */}
-          <div className="flex mb-1" style={{ paddingLeft: 24 }}>
-            <div className="flex relative w-full" style={{ height: 14 }}>
-              {heatmapGrid.monthLabels.map((ml, i) => (
-                <span
-                  key={i}
-                  className="text-[9px] text-muted-foreground absolute"
-                  style={{ left: `${(ml.col / heatmapGrid.numWeeks) * 100}%` }}
-                >
-                  {ml.label}
-                </span>
-              ))}
-            </div>
-          </div>
-          {/* Grid: 7 rows × N columns */}
-          <div className="flex gap-0">
-            {/* Day labels */}
-            <div className="flex flex-col gap-[3px] mr-1" style={{ width: 20 }}>
-              {dayLabels.map((l, i) => (
-                <div key={i} className="text-[8px] text-muted-foreground/60 flex items-center justify-end" style={{ height: 11, width: 20 }}>
-                  {l}
-                </div>
-              ))}
-            </div>
-            {/* Cells */}
-            <div
-              className="grid gap-[3px] flex-1"
-              style={{ gridTemplateColumns: `repeat(${heatmapGrid.numWeeks}, 1fr)`, gridTemplateRows: 'repeat(7, 1fr)' }}
-            >
-              {/* Render column-major: for each row (day), for each column (week) */}
-              {Array.from({ length: 7 }).map((_, row) =>
-                Array.from({ length: heatmapGrid.numWeeks }).map((_, col) => {
-                  const cell = heatmapGrid.grid[row][col];
-                  if (!cell) return <div key={`${row}-${col}`} className="rounded-sm" style={{ aspectRatio: '1', backgroundColor: 'transparent' }} />;
-                  const intensity = cell.count / heatmapGrid.maxCount;
-                  return (
-                    <div
-                      key={`${row}-${col}`}
-                      className="rounded-sm"
-                      style={{
-                        aspectRatio: '1',
-                        backgroundColor: !cell.inRange
-                          ? 'transparent'
-                          : cell.count === 0
-                            ? 'hsl(var(--dot-empty))'
-                            : `hsl(var(--dot-filled) / ${0.25 + intensity * 0.75})`,
-                        outline: cell.isToday ? '1.5px solid hsl(var(--primary))' : undefined,
-                        outlineOffset: cell.isToday ? -1 : undefined,
-                      }}
-                      title={cell.inRange ? `${cell.date.toLocaleDateString('cs')}: ${cell.count}` : ''}
-                    />
-                  );
-                })
-              )}
-            </div>
-          </div>
-        </div>
+        <HeatmapGrid grid={heatmapGrid} dayLabels={dayLabels} />
       </div>
     </div>
   );
