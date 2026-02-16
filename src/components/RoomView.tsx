@@ -142,6 +142,7 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
             <div className="px-4 pt-3 pb-1 shrink-0">
               <StatsBar
                 members={membersForStats}
+                events={store.events}
                 getCalendarWeekCount={store.getCalendarWeekCount}
                 getAllTimeCount={store.getAllTimeCount}
                 getStreak={store.getStreak}
