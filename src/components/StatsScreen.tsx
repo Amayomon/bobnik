@@ -181,7 +181,7 @@ export function StatsScreen({
 
   /* ═══ E — Hnědmapa (GitHub-style) ═══ */
   const heatmapGrid = useMemo(() => {
-    const heatDays = period === 'today' ? 7 : period === '7' ? 7 : period === '30' ? 30 : 365;
+    const heatDays = 365; // Always last 12 months, independent of time filter
     const byScope = viewMode === 'room' ? events : events.filter(e => e.member_id === viewMode);
 
     // Build daily counts map
@@ -194,14 +194,13 @@ export function StatsScreen({
     const today = getStartOfDay(new Date());
     const todayKey = today.toISOString();
 
-    // Build array of days ending at today, going back heatDays
     const endDate = new Date(today);
     const startDate = new Date(today);
     startDate.setDate(startDate.getDate() - heatDays + 1);
 
-    // For GitHub layout: pad start to nearest previous Monday
-    const startDow = startDate.getDay(); // 0=Sun
-    const padStart = startDow === 0 ? 6 : startDow - 1; // days to subtract to reach Monday
+    // Pad start to nearest previous Monday
+    const startDow = startDate.getDay();
+    const padStart = startDow === 0 ? 6 : startDow - 1;
     const gridStart = new Date(startDate);
     gridStart.setDate(gridStart.getDate() - padStart);
 
@@ -211,11 +210,9 @@ export function StatsScreen({
     const gridEnd = new Date(endDate);
     gridEnd.setDate(gridEnd.getDate() + padEnd);
 
-    // Build cells
     const cells: { date: Date; count: number; isToday: boolean; inRange: boolean }[] = [];
     const cursor = new Date(gridStart);
     while (cursor <= gridEnd) {
-      const key = new Date(cursor).toISOString();
       const isInRange = cursor >= startDate && cursor <= endDate;
       cells.push({
         date: new Date(cursor),
@@ -226,21 +223,17 @@ export function StatsScreen({
       cursor.setDate(cursor.getDate() + 1);
     }
 
-    // GitHub layout: 7 rows (Mon-Sun), N columns (weeks)
-    // cells are ordered Mon→Sun per week (column-major)
     const numWeeks = Math.ceil(cells.length / 7);
     const grid: (typeof cells[0] | null)[][] = Array.from({ length: 7 }, () => Array(numWeeks).fill(null));
     for (let i = 0; i < cells.length; i++) {
       const week = Math.floor(i / 7);
-      const dow = i % 7; // 0=Mon, 6=Sun
+      const dow = i % 7;
       grid[dow][week] = cells[i];
     }
 
-    // Month labels
     const monthLabels: { label: string; col: number }[] = [];
     let lastMonth = -1;
     for (let w = 0; w < numWeeks; w++) {
-      // Use Monday of each week for month label
       const cell = grid[0][w];
       if (cell) {
         const m = cell.date.getMonth();
@@ -254,7 +247,7 @@ export function StatsScreen({
     const maxCount = Math.max(...cells.map(c => c.count), 1);
 
     return { grid, numWeeks, monthLabels, maxCount };
-  }, [events, viewMode, period]);
+  }, [events, viewMode]); // Only depends on events + scope, NOT period
 
   const dayLabels = ['Po', '', 'St', '', 'Pá', '', 'Ne'];
 
