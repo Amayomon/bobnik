@@ -135,11 +135,7 @@ export function StatsScreen({
 
   /* ═══ D — Žebříček ═══ */
   const leaderboard = useMemo(() => {
-    // Count from scopedEvents per member (always room-wide for ranking context)
-    const counts = new Map<string, number>();
-    const angelics = new Map<string, number>();
-    const notaries = new Map<string, number>();
-
+    // Use scopedEvents time range but always room-wide for ranking
     const cutoff = new Date();
     if (period === 'today') {
       cutoff.setHours(0, 0, 0, 0);
@@ -151,6 +147,10 @@ export function StatsScreen({
     const roomEvents = period === 'all'
       ? events
       : events.filter(e => new Date(e.created_at) >= cutoff);
+
+    const counts = new Map<string, number>();
+    const angelics = new Map<string, number>();
+    const notaries = new Map<string, number>();
 
     for (const e of roomEvents) {
       counts.set(e.member_id, (counts.get(e.member_id) ?? 0) + 1);
@@ -170,7 +170,8 @@ export function StatsScreen({
         if (b.angelicCount !== a.angelicCount) return b.angelicCount - a.angelicCount;
         const aPct = a.count > 0 ? a.notaryCount / a.count : 0;
         const bPct = b.count > 0 ? b.notaryCount / b.count : 0;
-        return bPct - aPct;
+        if (bPct !== aPct) return bPct - aPct;
+        return a.id.localeCompare(b.id);
       });
   }, [members, events, period, periodDays]);
 
@@ -178,13 +179,84 @@ export function StatsScreen({
     ? leaderboard.findIndex(m => m.id === viewMode) + 1
     : null;
 
-  /* ═══ E — Hnědmapa ═══ */
-  const heatmapDays = period === 'today' ? 7 : period === '7' ? 7 : period === '30' ? 30 : 365;
-  const heatmapMemberId = viewMode === 'room' ? null : viewMode;
-  const heatmap = useMemo(() => getHeatmapData(heatmapMemberId, heatmapDays), [heatmapMemberId, heatmapDays, getHeatmapData]);
-  const maxHeat = Math.max(...heatmap.map(d => d.count), 1);
+  /* ═══ E — Hnědmapa (GitHub-style) ═══ */
+  const heatmapGrid = useMemo(() => {
+    const heatDays = period === 'today' ? 7 : period === '7' ? 7 : period === '30' ? 30 : 365;
+    const byScope = viewMode === 'room' ? events : events.filter(e => e.member_id === viewMode);
 
-  const heatmapCols = heatmapDays <= 30 ? Math.min(heatmapDays, 10) : 13;
+    // Build daily counts map
+    const dailyCounts = new Map<string, number>();
+    for (const e of byScope) {
+      const key = getStartOfDay(new Date(e.created_at)).toISOString();
+      dailyCounts.set(key, (dailyCounts.get(key) ?? 0) + 1);
+    }
+
+    const today = getStartOfDay(new Date());
+    const todayKey = today.toISOString();
+
+    // Build array of days ending at today, going back heatDays
+    const endDate = new Date(today);
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - heatDays + 1);
+
+    // For GitHub layout: pad start to nearest previous Monday
+    const startDow = startDate.getDay(); // 0=Sun
+    const padStart = startDow === 0 ? 6 : startDow - 1; // days to subtract to reach Monday
+    const gridStart = new Date(startDate);
+    gridStart.setDate(gridStart.getDate() - padStart);
+
+    // Pad end to nearest next Sunday
+    const endDow = endDate.getDay();
+    const padEnd = endDow === 0 ? 0 : 7 - endDow;
+    const gridEnd = new Date(endDate);
+    gridEnd.setDate(gridEnd.getDate() + padEnd);
+
+    // Build cells
+    const cells: { date: Date; count: number; isToday: boolean; inRange: boolean }[] = [];
+    const cursor = new Date(gridStart);
+    while (cursor <= gridEnd) {
+      const key = new Date(cursor).toISOString();
+      const isInRange = cursor >= startDate && cursor <= endDate;
+      cells.push({
+        date: new Date(cursor),
+        count: dailyCounts.get(getStartOfDay(cursor).toISOString()) ?? 0,
+        isToday: getStartOfDay(cursor).toISOString() === todayKey,
+        inRange: isInRange,
+      });
+      cursor.setDate(cursor.getDate() + 1);
+    }
+
+    // GitHub layout: 7 rows (Mon-Sun), N columns (weeks)
+    // cells are ordered Mon→Sun per week (column-major)
+    const numWeeks = Math.ceil(cells.length / 7);
+    const grid: (typeof cells[0] | null)[][] = Array.from({ length: 7 }, () => Array(numWeeks).fill(null));
+    for (let i = 0; i < cells.length; i++) {
+      const week = Math.floor(i / 7);
+      const dow = i % 7; // 0=Mon, 6=Sun
+      grid[dow][week] = cells[i];
+    }
+
+    // Month labels
+    const monthLabels: { label: string; col: number }[] = [];
+    let lastMonth = -1;
+    for (let w = 0; w < numWeeks; w++) {
+      // Use Monday of each week for month label
+      const cell = grid[0][w];
+      if (cell) {
+        const m = cell.date.getMonth();
+        if (m !== lastMonth) {
+          monthLabels.push({ label: format(cell.date, 'LLL', { locale: cs }), col: w });
+          lastMonth = m;
+        }
+      }
+    }
+
+    const maxCount = Math.max(...cells.map(c => c.count), 1);
+
+    return { grid, numWeeks, monthLabels, maxCount };
+  }, [events, viewMode, period]);
+
+  const dayLabels = ['Po', '', 'St', '', 'Pá', '', 'Ne'];
 
   /* ── Filter config ── */
   const periods: { key: Period; label: string }[] = [
@@ -322,24 +394,65 @@ export function StatsScreen({
           </div>
         )}
 
-        {/* ── E. Hnědmapa ── */}
+        {/* ── E. Hnědmapa (GitHub-style) ── */}
         <SectionHeader title="Hnědmapa" sub="Intenzita aktivity po jednotlivých dnech." />
-        <div className={`grid gap-[3px] mb-6`} style={{ gridTemplateColumns: `repeat(${heatmapCols}, 1fr)` }}>
-          {heatmap.map((day, i) => {
-            const intensity = day.count / maxHeat;
-            return (
-              <div
-                key={i}
-                className="aspect-square rounded-sm"
-                style={{
-                  backgroundColor: day.count === 0
-                    ? 'hsl(var(--dot-empty))'
-                    : `hsl(var(--dot-filled) / ${0.25 + intensity * 0.75})`,
-                }}
-                title={`${day.date.toLocaleDateString('cs')}: ${day.count}`}
-              />
-            );
-          })}
+        <div className="bg-card rounded-xl border border-border/60 p-3 mb-6 overflow-x-auto">
+          {/* Month labels */}
+          <div className="flex mb-1" style={{ paddingLeft: 24 }}>
+            <div className="flex relative w-full" style={{ height: 14 }}>
+              {heatmapGrid.monthLabels.map((ml, i) => (
+                <span
+                  key={i}
+                  className="text-[9px] text-muted-foreground absolute"
+                  style={{ left: `${(ml.col / heatmapGrid.numWeeks) * 100}%` }}
+                >
+                  {ml.label}
+                </span>
+              ))}
+            </div>
+          </div>
+          {/* Grid: 7 rows × N columns */}
+          <div className="flex gap-0">
+            {/* Day labels */}
+            <div className="flex flex-col gap-[3px] mr-1" style={{ width: 20 }}>
+              {dayLabels.map((l, i) => (
+                <div key={i} className="text-[8px] text-muted-foreground/60 flex items-center justify-end" style={{ height: 11, width: 20 }}>
+                  {l}
+                </div>
+              ))}
+            </div>
+            {/* Cells */}
+            <div
+              className="grid gap-[3px] flex-1"
+              style={{ gridTemplateColumns: `repeat(${heatmapGrid.numWeeks}, 1fr)`, gridTemplateRows: 'repeat(7, 1fr)' }}
+            >
+              {/* Render column-major: for each row (day), for each column (week) */}
+              {Array.from({ length: 7 }).map((_, row) =>
+                Array.from({ length: heatmapGrid.numWeeks }).map((_, col) => {
+                  const cell = heatmapGrid.grid[row][col];
+                  if (!cell) return <div key={`${row}-${col}`} className="rounded-sm" style={{ aspectRatio: '1', backgroundColor: 'transparent' }} />;
+                  const intensity = cell.count / heatmapGrid.maxCount;
+                  return (
+                    <div
+                      key={`${row}-${col}`}
+                      className="rounded-sm"
+                      style={{
+                        aspectRatio: '1',
+                        backgroundColor: !cell.inRange
+                          ? 'transparent'
+                          : cell.count === 0
+                            ? 'hsl(var(--dot-empty))'
+                            : `hsl(var(--dot-filled) / ${0.25 + intensity * 0.75})`,
+                        outline: cell.isToday ? '1.5px solid hsl(var(--primary))' : undefined,
+                        outlineOffset: cell.isToday ? -1 : undefined,
+                      }}
+                      title={cell.inRange ? `${cell.date.toLocaleDateString('cs')}: ${cell.count}` : ''}
+                    />
+                  );
+                })
+              )}
+            </div>
+          </div>
         </div>
       </div>
     </div>
