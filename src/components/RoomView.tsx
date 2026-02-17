@@ -14,6 +14,7 @@ import { HamburgerMenu } from '@/components/HamburgerMenu';
 import { RecentActivityPanel } from '@/components/RecentActivityPanel';
 import { FloatingAddButton } from '@/components/FloatingAddButton';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 interface RoomViewProps {
   roomId: string;
@@ -24,7 +25,7 @@ type Screen = 'room' | 'stats' | 'profile' | 'log';
 
 export function RoomView({ roomId, onLeave }: RoomViewProps) {
   const store = useRoomStore(roomId);
-  const { signOut } = useAuth();
+  const { signOut, user } = useAuth();
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [showInvite, setShowInvite] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -33,6 +34,10 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
   const [activeScreen, setActiveScreen] = useState<Screen>('room');
   const [specialOverlay, setSpecialOverlay] = useState<'angelic' | 'demonic' | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  // Edit mode: when editing an existing event from timeline
+  const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  // Soft-delete undo state
+  const [deletedEvent, setDeletedEvent] = useState<{ id: string; timeout: NodeJS.Timeout } | null>(null);
 
   // Clear expired auras on load
   useEffect(() => {
@@ -46,6 +51,63 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
       setRatingMemberId(memberId);
     }
   }, [store]);
+
+  // Handle clicking a timeline event to edit it
+  const handleEditEvent = useCallback((eventId: string) => {
+    setEditingEventId(eventId);
+  }, []);
+
+  // Get edit values for the editing event
+  const editingEvent = editingEventId ? store.events.find(e => e.id === editingEventId) : null;
+  const editValues = editingEvent ? {
+    consistency: editingEvent.consistency,
+    smell: editingEvent.smell,
+    size: editingEvent.size,
+    effort: editingEvent.effort,
+    notary_present: editingEvent.notary_present,
+  } : null;
+
+  // Check if current user can delete the editing event
+  const canDeleteEditingEvent = editingEvent ? (() => {
+    const eventMember = store.members.find(m => m.id === editingEvent.member_id);
+    return eventMember?.user_id === user?.id;
+  })() : false;
+
+  // Soft delete handler
+  const handleSoftDelete = useCallback(async (eventId: string) => {
+    if (!user) return;
+    await supabase.from('events').update({
+      is_deleted: true,
+      deleted_at: new Date().toISOString(),
+      deleted_by: user.id,
+    }).eq('id', eventId);
+
+    setEditingEventId(null);
+
+    // Show undo toast
+    const timeout = setTimeout(() => {
+      setDeletedEvent(null);
+    }, 8000);
+
+    if (deletedEvent?.timeout) clearTimeout(deletedEvent.timeout);
+    setDeletedEvent({ id: eventId, timeout });
+
+    toast('Záznam odebrán', {
+      duration: 8000,
+      action: {
+        label: 'VRÁTIT',
+        onClick: async () => {
+          await supabase.from('events').update({
+            is_deleted: false,
+            deleted_at: null,
+            deleted_by: null,
+          }).eq('id', eventId);
+          clearTimeout(timeout);
+          setDeletedEvent(null);
+        },
+      },
+    });
+  }, [user, deletedEvent]);
 
   const handleMenuNavigate = useCallback((target: 'room' | 'log' | 'stats' | 'profile' | 'invite' | 'settings' | 'lobby' | 'logout') => {
     if (target === 'invite') {
@@ -245,14 +307,16 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
           onNavigate={handleMenuNavigate}
         />
 
-        {/* Rating popup */}
+        {/* Rating popup — new event or editing existing */}
         <EventRatingPopup
-          open={!!ratingEventId}
+          open={!!ratingEventId || !!editingEventId}
+          editValues={editValues}
           onSave={async (ratings) => {
-            if (ratingEventId) {
+            const targetId = editingEventId || ratingEventId;
+            if (targetId) {
               const special = determineSpecialType(ratings);
               const updateData = { ...ratings, special_type: special };
-              await store.updateEventRatings(ratingEventId, updateData);
+              await store.updateEventRatings(targetId, updateData);
 
               if (special && ratingMemberId) {
                 await store.setMemberAura(ratingMemberId, special);
@@ -263,14 +327,16 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
             }
             setRatingEventId(null);
             setRatingMemberId(null);
+            setEditingEventId(null);
           }}
-          onSkip={() => { setRatingEventId(null); setRatingMemberId(null); }}
+          onSkip={() => { setRatingEventId(null); setRatingMemberId(null); setEditingEventId(null); }}
           onUndo={() => {
             setRatingEventId(null);
             setRatingMemberId(null);
             store.undoLastEvent();
           }}
-          canUndo={!!store.undoEvent}
+          canUndo={!!store.undoEvent && !editingEventId}
+          onDelete={canDeleteEditingEvent && editingEventId ? () => handleSoftDelete(editingEventId) : undefined}
         />
 
         {/* Undo toast */}
@@ -322,6 +388,7 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
             avg7={(store.getCountInRange(selectedMember.id, 7) / 7).toFixed(1)}
             avg30={(store.getCountInRange(selectedMember.id, 30) / 30).toFixed(1)}
             onClose={() => setSelectedMemberId(null)}
+            onEditEvent={handleEditEvent}
           />
         )}
 

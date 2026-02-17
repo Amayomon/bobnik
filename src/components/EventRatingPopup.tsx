@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -13,6 +13,10 @@ interface EventRatingPopupProps {
   onSkip: () => void;
   onUndo: () => void;
   canUndo: boolean;
+  /** When editing an existing event, pre-fill values */
+  editValues?: { consistency: number; smell: number; size: number; effort: number; notary_present: boolean } | null;
+  /** Show delete button in edit mode */
+  onDelete?: () => void;
 }
 
 const ATTRIBUTES = [
@@ -69,7 +73,7 @@ function SegmentedControl({
   );
 }
 
-export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo }: EventRatingPopupProps) {
+export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo, editValues, onDelete }: EventRatingPopupProps) {
   const [ratings, setRatings] = useState({
     consistency: 0,
     smell: 0,
@@ -77,6 +81,23 @@ export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo }: Even
     effort: 0,
   });
   const [notaryPresent, setNotaryPresent] = useState(false);
+  const isEditMode = !!editValues;
+
+  // Pre-fill values when editing
+  useEffect(() => {
+    if (editValues) {
+      setRatings({
+        consistency: editValues.consistency,
+        smell: editValues.smell,
+        size: editValues.size,
+        effort: editValues.effort,
+      });
+      setNotaryPresent(editValues.notary_present);
+    } else {
+      setRatings({ consistency: 0, smell: 0, size: 0, effort: 0 });
+      setNotaryPresent(false);
+    }
+  }, [editValues]);
 
   const updateRating = (key: keyof typeof ratings, value: number) => {
     setRatings(prev => ({ ...prev, [key]: value }));
@@ -98,9 +119,9 @@ export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo }: Even
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleSkip(); }}>
       <DialogContent className="max-w-[360px] rounded-2xl p-5 gap-4 max-h-[85vh] overflow-y-auto">
         <DialogHeader className="space-y-1">
-          <DialogTitle className="text-base font-bold">Detaily záznamu</DialogTitle>
+          <DialogTitle className="text-base font-bold">{isEditMode ? 'Upravit záznam' : 'Detaily záznamu'}</DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
-            Ohodnoť vlastnosti (volitelné)
+            {isEditMode ? 'Uprav vlastnosti nebo odeber záznam' : 'Ohodnoť vlastnosti (volitelné)'}
           </DialogDescription>
         </DialogHeader>
 
@@ -143,12 +164,20 @@ export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo }: Even
             Přeskočit
           </button>
         </div>
-        {canUndo && (
+        {canUndo && !isEditMode && (
           <button
             onClick={onUndo}
             className="w-full text-xs text-destructive font-medium py-1.5 hover:underline transition-colors"
           >
             ↩ Zpět (smazat záznam)
+          </button>
+        )}
+        {isEditMode && onDelete && (
+          <button
+            onClick={onDelete}
+            className="w-full text-xs text-destructive font-medium py-1.5 hover:underline transition-colors"
+          >
+            🗑 Odebrat záznam
           </button>
         )}
       </DialogContent>

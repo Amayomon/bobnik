@@ -23,6 +23,7 @@ interface MemberDetailProps {
   avg7: string;
   avg30: string;
   onClose: () => void;
+  onEditEvent?: (eventId: string) => void;
 }
 
 function groupEventsByDay(events: EventWithRatings[]) {
@@ -101,6 +102,7 @@ export function MemberDetail({
   avg7,
   avg30,
   onClose,
+  onEditEvent,
 }: MemberDetailProps) {
   const maxWeekCount = Math.max(...weekCounts.map(d => d.count), 1);
 
@@ -139,12 +141,19 @@ export function MemberDetail({
                   <p className="text-[11px] font-semibold text-muted-foreground mb-1">{group.label}</p>
                   <div className="space-y-0.5">
                     {group.events.map(ev => (
-                      <div key={ev.id} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-muted/50">
+                      <div
+                        key={ev.id}
+                        className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-muted/50 ${onEditEvent ? 'cursor-pointer hover:bg-muted/80 active:bg-muted transition-colors' : ''}`}
+                        onClick={() => onEditEvent?.(ev.id)}
+                      >
                         <span className="text-xs text-muted-foreground tabular-nums w-10">
                           {format(ev.createdAt, 'HH:mm')}
                         </span>
                         <span className="text-sm text-foreground flex-1">+1 záznam</span>
                         <RatingBadges event={ev} />
+                        {onEditEvent && (
+                          <span className="text-muted-foreground/50 text-xs ml-1">⋯</span>
+                        )}
                       </div>
                     ))}
                   </div>
