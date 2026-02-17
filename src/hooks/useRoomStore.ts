@@ -37,7 +37,7 @@ export function useRoomStore(roomId: string | null) {
   const [members, setMembers] = useState<Member[]>([]);
   const [events, setEvents] = useState<BobnikEvent[]>([]);
   const [roomName, setRoomName] = useState('');
-  const [roomCreatedBy, setRoomCreatedBy] = useState<string | null>(null);
+  const [roomCreatedBy, setRoomCreatedBy] = useState<string | null>(null); // room owner
   const [inviteCode, setInviteCode] = useState('');
   const [loading, setLoading] = useState(true);
   const [undoEvent, setUndoEvent] = useState<BobnikEvent | null>(null);
