@@ -67,10 +67,11 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
     notary_present: editingEvent.notary_present,
   } : null;
 
-  // Check if current user can delete the editing event
+  // Check if current user can delete the editing event (own event OR room owner)
+  const isRoomOwner = !!user && store.roomCreatedBy === user.id;
   const canDeleteEditingEvent = editingEvent ? (() => {
     const eventMember = store.members.find(m => m.id === editingEvent.member_id);
-    return eventMember?.user_id === user?.id;
+    return eventMember?.user_id === user?.id || isRoomOwner;
   })() : false;
 
   // Soft delete handler

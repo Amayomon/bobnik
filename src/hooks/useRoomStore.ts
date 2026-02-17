@@ -37,6 +37,7 @@ export function useRoomStore(roomId: string | null) {
   const [members, setMembers] = useState<Member[]>([]);
   const [events, setEvents] = useState<BobnikEvent[]>([]);
   const [roomName, setRoomName] = useState('');
+  const [roomCreatedBy, setRoomCreatedBy] = useState<string | null>(null);
   const [inviteCode, setInviteCode] = useState('');
   const [loading, setLoading] = useState(true);
   const [undoEvent, setUndoEvent] = useState<BobnikEvent | null>(null);
@@ -50,7 +51,7 @@ export function useRoomStore(roomId: string | null) {
       setLoading(true);
 
       const [roomRes, membersRes, eventsRes] = await Promise.all([
-        supabase.from('rooms').select('name, invite_code').eq('id', roomId).maybeSingle(),
+        supabase.from('rooms').select('name, invite_code, created_by').eq('id', roomId).maybeSingle(),
         supabase.from('members').select('*').eq('room_id', roomId),
         supabase.from('events').select('*').eq('room_id', roomId).order('created_at', { ascending: true }),
       ]);
@@ -58,6 +59,7 @@ export function useRoomStore(roomId: string | null) {
       if (roomRes.data) {
         setRoomName(roomRes.data.name);
         setInviteCode(roomRes.data.invite_code);
+        setRoomCreatedBy(roomRes.data.created_by);
       }
       if (membersRes.data) setMembers(membersRes.data as Member[]);
       if (eventsRes.data) setEvents(eventsRes.data as BobnikEvent[]);
@@ -248,6 +250,7 @@ export function useRoomStore(roomId: string | null) {
     members,
     events,
     roomName,
+    roomCreatedBy,
     inviteCode,
     loading,
     myMember,
