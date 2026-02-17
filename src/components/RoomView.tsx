@@ -24,7 +24,7 @@ type Screen = 'room' | 'stats' | 'profile' | 'log';
 
 export function RoomView({ roomId, onLeave }: RoomViewProps) {
   const store = useRoomStore(roomId);
-  const { user, signOut } = useAuth();
+  const { signOut } = useAuth();
   const [selectedMemberId, setSelectedMemberId] = useState<string | null>(null);
   const [showInvite, setShowInvite] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -321,26 +321,7 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
             streak={store.getStreak(selectedMember.id)}
             avg7={(store.getCountInRange(selectedMember.id, 7) / 7).toFixed(1)}
             avg30={(store.getCountInRange(selectedMember.id, 30) / 30).toFixed(1)}
-            canDelete={selectedMember.user_id === user?.id}
             onClose={() => setSelectedMemberId(null)}
-            onDeleteEvent={async (eventId) => {
-              await store.softDeleteEvent(eventId, user?.id ?? '');
-            }}
-            onUndoDelete={async (eventId, ev) => {
-              const originalEvent = {
-                id: ev.id,
-                room_id: roomId,
-                member_id: ev.memberId,
-                created_at: ev.createdAt.toISOString(),
-                consistency: ev.consistency ?? 0,
-                smell: ev.smell ?? 0,
-                size: ev.size ?? 0,
-                effort: ev.effort ?? 0,
-                notary_present: ev.notaryPresent ?? false,
-                special_type: ev.specialType ?? null,
-              };
-              await store.undoSoftDelete(eventId, originalEvent as any);
-            }}
           />
         )}
 

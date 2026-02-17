@@ -158,10 +158,6 @@
     animation: progress-fill 15s linear forwards;
   }
 
-  .animate-progress-fill-8s {
-    animation: progress-fill 8s linear forwards;
-  }
-
   @keyframes special-enter {
     0% { transform: scale(0.7); opacity: 0; }
     60% { transform: scale(1.05); }

@@ -1,4 +1,4 @@
-import { useState, useRef, useCallback, useEffect } from 'react';
+import { useState } from 'react';
 import { format, isToday, isYesterday } from 'date-fns';
 import { cs } from 'date-fns/locale';
 
@@ -22,10 +22,7 @@ interface MemberDetailProps {
   streak: number;
   avg7: string;
   avg30: string;
-  canDelete: boolean;
   onClose: () => void;
-  onDeleteEvent: (eventId: string) => Promise<void>;
-  onUndoDelete: (eventId: string, event: EventWithRatings) => Promise<void>;
 }
 
 function groupEventsByDay(events: EventWithRatings[]) {
@@ -54,134 +51,44 @@ const RATING_LABELS = [
   { key: 'effort' as const, abbr: 'Ú' },
 ];
 
-// --- Swipeable Row ---
-function SwipeableRow({
-  children,
-  canDelete,
-  onDelete,
-}: {
-  children: React.ReactNode;
-  canDelete: boolean;
-  onDelete: () => void;
-}) {
-  const rowRef = useRef<HTMLDivElement>(null);
-  const startXRef = useRef(0);
-  const currentXRef = useRef(0);
-  const swipingRef = useRef(false);
-
-  const onTouchStart = useCallback((e: React.TouchEvent) => {
-    if (!canDelete) return;
-    startXRef.current = e.touches[0].clientX;
-    currentXRef.current = 0;
-    swipingRef.current = false;
-  }, [canDelete]);
-
-  const onTouchMove = useCallback((e: React.TouchEvent) => {
-    if (!canDelete) return;
-    const dx = e.touches[0].clientX - startXRef.current;
-    if (dx < -10) swipingRef.current = true;
-    if (!swipingRef.current) return;
-    currentXRef.current = Math.min(0, Math.max(dx, -90));
-    if (rowRef.current) {
-      rowRef.current.style.transform = `translateX(${currentXRef.current}px)`;
-    }
-  }, [canDelete]);
-
-  const onTouchEnd = useCallback(() => {
-    if (!canDelete || !rowRef.current) return;
-    if (currentXRef.current < -50) {
-      rowRef.current.style.transform = 'translateX(-80px)';
-    } else {
-      rowRef.current.style.transform = 'translateX(0)';
-    }
-    swipingRef.current = false;
-  }, [canDelete]);
-
-  const resetSwipe = useCallback(() => {
-    if (rowRef.current) rowRef.current.style.transform = 'translateX(0)';
-  }, []);
-
-  return (
-    <div className="relative overflow-hidden rounded-lg">
-      {/* Delete action behind */}
-      {canDelete && (
-        <div className="absolute inset-y-0 right-0 w-20 flex items-center justify-center bg-destructive">
-          <button
-            onClick={() => { resetSwipe(); onDelete(); }}
-            className="text-destructive-foreground text-xs font-semibold w-full h-full"
-          >
-            Odebrat
-          </button>
-        </div>
-      )}
-      {/* Foreground row */}
-      <div
-        ref={rowRef}
-        className="relative bg-muted/50 transition-transform duration-150"
-        onTouchStart={onTouchStart}
-        onTouchMove={onTouchMove}
-        onTouchEnd={onTouchEnd}
-      >
-        {children}
-      </div>
-    </div>
-  );
-}
-
-// --- Inline Detail Panel ---
-function DetailPanel({ event, onDelete, canDelete }: { event: EventWithRatings; onDelete: () => void; canDelete: boolean }) {
+function RatingBadges({ event }: { event: EventWithRatings }) {
   const hasRatings = RATING_LABELS.some(r => (event[r.key] ?? 0) !== 0);
+  const hasAnything = hasRatings || event.notaryPresent;
+  const [expanded, setExpanded] = useState(false);
+
+  if (!hasAnything) return null;
 
   return (
-    <div className="mx-1 mb-1 p-3 bg-card rounded-xl shadow-md border border-border/50 animate-pop-in">
-      <p className="text-[11px] font-semibold text-muted-foreground mb-2">Detail záznamu</p>
-      <div className="flex flex-wrap gap-2 text-xs text-foreground mb-3">
-        <span className="bg-muted rounded-md px-2 py-1">+1 záznam</span>
-        <span className="bg-muted rounded-md px-2 py-1">{format(event.createdAt, 'HH:mm')}</span>
-        <span className="bg-muted rounded-md px-2 py-1">{format(event.createdAt, 'd. MMMM yyyy', { locale: cs })}</span>
-        {event.specialType === 'angelic' && <span className="bg-muted rounded-md px-2 py-1">✨ Andělská</span>}
-        {event.specialType === 'demonic' && <span className="bg-muted rounded-md px-2 py-1">🔥 Ďábelská</span>}
-        {event.notaryPresent && <span className="bg-muted rounded-md px-2 py-1">📜 Notář</span>}
-        {hasRatings && RATING_LABELS.map(r => {
-          const val = event[r.key] ?? 0;
-          if (val === 0) return null;
-          return <span key={r.key} className="bg-muted rounded-md px-2 py-1 tabular-nums">{r.abbr}: {val > 0 ? `+${val}` : val}</span>;
-        })}
-      </div>
-      {canDelete && (
-        <button
-          onClick={onDelete}
-          className="w-full py-2 rounded-lg bg-destructive/10 text-destructive text-sm font-semibold hover:bg-destructive/20 transition-colors"
-        >
-          Odebrat záznam
-        </button>
+    <button
+      type="button"
+      onClick={(e) => { e.stopPropagation(); setExpanded(!expanded); }}
+      className="inline-flex items-center gap-1 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+    >
+      {expanded ? (
+        <>
+          {RATING_LABELS.map(r => {
+            const val = event[r.key] ?? 0;
+            if (val === 0) return null;
+            return (
+              <span key={r.key} className="tabular-nums">
+                {r.abbr}:{val > 0 ? `+${val}` : val}
+              </span>
+            );
+          })}
+          {event.notaryPresent && (
+            <span className="text-muted-foreground border border-border rounded px-1 py-px">Notář</span>
+          )}
+          {event.specialType === 'angelic' && (
+            <span className="text-[hsl(45_60%_40%)] border border-[hsl(45_60%_70%)] rounded px-1 py-px">✨ Andělská</span>
+          )}
+          {event.specialType === 'demonic' && (
+            <span className="text-[hsl(0_50%_45%)] border border-[hsl(0_40%_65%)] rounded px-1 py-px">🔥 Ďábelská</span>
+          )}
+        </>
+      ) : (
+        <span className="opacity-60">📊</span>
       )}
-    </div>
-  );
-}
-
-// --- Delete Undo Toast ---
-function DeleteUndoToast({ onUndo, onDismiss }: { onUndo: () => void; onDismiss: () => void }) {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    requestAnimationFrame(() => setVisible(true));
-    const timer = setTimeout(onDismiss, 8000);
-    return () => clearTimeout(timer);
-  }, [onDismiss]);
-
-  return (
-    <div className={`fixed bottom-20 left-1/2 -translate-x-1/2 z-50 transition-all duration-300 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'}`}>
-      <div className="flex items-center gap-3 px-4 py-2.5 bg-[hsl(var(--undo-bg))] text-[hsl(var(--undo-foreground))] rounded-full shadow-lg">
-        <span className="text-sm">Záznam odebrán</span>
-        <button onClick={onUndo} className="text-sm font-bold text-primary underline underline-offset-2">
-          VRÁTIT
-        </button>
-        <div className="w-12 h-1 bg-muted/30 rounded-full overflow-hidden">
-          <div className="h-full bg-primary rounded-full animate-progress-fill-8s" />
-        </div>
-      </div>
-    </div>
+    </button>
   );
 }
 
@@ -193,38 +100,9 @@ export function MemberDetail({
   streak,
   avg7,
   avg30,
-  canDelete: canDeleteProp,
   onClose,
-  onDeleteEvent,
-  onUndoDelete,
 }: MemberDetailProps) {
   const maxWeekCount = Math.max(...weekCounts.map(d => d.count), 1);
-  const [expandedId, setExpandedId] = useState<string | null>(null);
-  const [deletedEvent, setDeletedEvent] = useState<EventWithRatings | null>(null);
-
-  const handleDelete = useCallback(async (ev: EventWithRatings) => {
-    setExpandedId(null);
-    setDeletedEvent(ev);
-    await onDeleteEvent(ev.id);
-  }, [onDeleteEvent]);
-
-  const handleUndo = useCallback(async () => {
-    if (!deletedEvent) return;
-    const ev = deletedEvent;
-    setDeletedEvent(null);
-    await onUndoDelete(ev.id, ev);
-  }, [deletedEvent, onUndoDelete]);
-
-  const handleDismissUndo = useCallback(() => {
-    setDeletedEvent(null);
-  }, []);
-
-  // Close expanded panel on modal close
-  const handleClose = useCallback(() => {
-    setExpandedId(null);
-    setDeletedEvent(null);
-    onClose();
-  }, [onClose]);
 
   // Show last 30 days of events grouped by day
   const recentEvents = allEvents.filter(e => {
@@ -235,7 +113,7 @@ export function MemberDetail({
   const grouped = groupEventsByDay(recentEvents);
 
   return (
-    <div className="fixed inset-0 z-40 flex items-end justify-center bg-foreground/20 backdrop-blur-sm" onClick={handleClose}>
+    <div className="fixed inset-0 z-40 flex items-end justify-center bg-foreground/20 backdrop-blur-sm" onClick={onClose}>
       <div
         className="w-full max-w-md bg-card rounded-t-2xl p-5 pb-8 animate-slide-up shadow-xl max-h-[85vh] overflow-y-auto"
         onClick={e => e.stopPropagation()}
@@ -246,7 +124,7 @@ export function MemberDetail({
             <h2 className="text-xl font-bold text-foreground">{member.name}</h2>
             <span className="text-xl">💩</span>
           </div>
-          <button onClick={handleClose} className="text-muted-foreground text-xl p-1">✕</button>
+          <button onClick={onClose} className="text-muted-foreground text-xl p-1">✕</button>
         </div>
 
         {/* Timeline */}
@@ -260,33 +138,15 @@ export function MemberDetail({
                 <div key={group.key}>
                   <p className="text-[11px] font-semibold text-muted-foreground mb-1">{group.label}</p>
                   <div className="space-y-0.5">
-                    {group.events.map(ev => {
-                      const canDelete = canDeleteProp;
-                      return (
-                        <div key={ev.id}>
-                          <SwipeableRow canDelete={canDelete} onDelete={() => handleDelete(ev)}>
-                            <div className="flex items-center gap-2 px-2.5 py-1.5">
-                              <span className="text-xs text-muted-foreground tabular-nums w-10">
-                                {format(ev.createdAt, 'HH:mm')}
-                              </span>
-                              <span className="text-sm text-foreground flex-1">+1 záznam</span>
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setExpandedId(expandedId === ev.id ? null : ev.id);
-                                }}
-                                className="text-muted-foreground hover:text-foreground transition-colors p-1 text-sm"
-                              >
-                                ⋯
-                              </button>
-                            </div>
-                          </SwipeableRow>
-                          {expandedId === ev.id && (
-                            <DetailPanel event={ev} onDelete={() => handleDelete(ev)} canDelete={canDelete} />
-                          )}
-                        </div>
-                      );
-                    })}
+                    {group.events.map(ev => (
+                      <div key={ev.id} className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-muted/50">
+                        <span className="text-xs text-muted-foreground tabular-nums w-10">
+                          {format(ev.createdAt, 'HH:mm')}
+                        </span>
+                        <span className="text-sm text-foreground flex-1">+1 záznam</span>
+                        <RatingBadges event={ev} />
+                      </div>
+                    ))}
                   </div>
                 </div>
               ))}
@@ -328,11 +188,6 @@ export function MemberDetail({
             <div className="text-lg font-bold text-foreground">{avg30}</div>
           </div>
         </div>
-
-        {/* Delete undo toast */}
-        {deletedEvent && (
-          <DeleteUndoToast onUndo={handleUndo} onDismiss={handleDismissUndo} />
-        )}
       </div>
     </div>
   );

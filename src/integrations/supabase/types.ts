@@ -18,11 +18,8 @@ export type Database = {
         Row: {
           consistency: number
           created_at: string
-          deleted_at: string | null
-          deleted_by: string | null
           effort: number
           id: string
-          is_deleted: boolean
           member_id: string
           notary_present: boolean
           room_id: string
@@ -34,11 +31,8 @@ export type Database = {
         Insert: {
           consistency?: number
           created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
           effort?: number
           id?: string
-          is_deleted?: boolean
           member_id: string
           notary_present?: boolean
           room_id: string
@@ -50,11 +44,8 @@ export type Database = {
         Update: {
           consistency?: number
           created_at?: string
-          deleted_at?: string | null
-          deleted_by?: string | null
           effort?: number
           id?: string
-          is_deleted?: boolean
           member_id?: string
           notary_present?: boolean
           room_id?: string

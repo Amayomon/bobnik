@@ -147,36 +147,6 @@ export function useRoomStore(roomId: string | null) {
     await supabase.from('events').update(ratings).eq('id', eventId);
   }, []);
 
-  // Soft-delete an event (optimistic removal + DB update)
-  const softDeleteEvent = useCallback(async (eventId: string, deletedByUserId: string) => {
-    // Optimistically remove from local state
-    setEvents(prev => prev.filter(e => e.id !== eventId));
-    const { error } = await supabase.from('events').update({
-      is_deleted: true,
-      deleted_at: new Date().toISOString(),
-      deleted_by: deletedByUserId,
-    } as any).eq('id', eventId);
-    if (error) {
-      // Revert: re-fetch
-      const { data } = await supabase.from('events').select('*').eq('room_id', roomId!).order('created_at', { ascending: true });
-      if (data) setEvents(data as BobnikEvent[]);
-    }
-  }, [roomId]);
-
-  // Undo soft-delete
-  const undoSoftDelete = useCallback(async (eventId: string, originalEvent: BobnikEvent) => {
-    // Optimistically restore
-    setEvents(prev => {
-      if (prev.some(e => e.id === eventId)) return prev;
-      return [...prev, originalEvent].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-    });
-    await supabase.from('events').update({
-      is_deleted: false,
-      deleted_at: null,
-      deleted_by: null,
-    } as any).eq('id', eventId);
-  }, []);
-
   const setMemberAura = useCallback(async (memberId: string, auraType: string) => {
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
     await supabase.from('members').update({ aura_type: auraType, aura_expires_at: expiresAt }).eq('id', memberId);
@@ -297,7 +267,5 @@ export function useRoomStore(roomId: string | null) {
     getAllTimeCount,
     getStreak,
     getHeatmapData,
-    softDeleteEvent,
-    undoSoftDelete,
   };
 }
