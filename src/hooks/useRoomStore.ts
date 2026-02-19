@@ -85,8 +85,13 @@ export function useRoomStore(roomId: string | null) {
           } else if (payload.eventType === 'DELETE') {
             setEvents(prev => prev.filter(e => e.id !== (payload.old as any).id));
           } else if (payload.eventType === 'UPDATE') {
-            const updated = payload.new as BobnikEvent;
-            setEvents(prev => prev.map(e => e.id === updated.id ? updated : e));
+            const updated = payload.new as BobnikEvent & { is_deleted?: boolean };
+            if (updated.is_deleted) {
+              // Soft-deleted — remove from local state immediately
+              setEvents(prev => prev.filter(e => e.id !== updated.id));
+            } else {
+              setEvents(prev => prev.map(e => e.id === updated.id ? updated : e));
+            }
           }
         }
       )
@@ -148,6 +153,22 @@ export function useRoomStore(roomId: string | null) {
   const updateEventRatings = useCallback(async (eventId: string, ratings: { consistency: number; smell: number; size: number; effort: number; notary_present?: boolean; special_type?: string | null }) => {
     await supabase.from('events').update(ratings).eq('id', eventId);
   }, []);
+
+  // Optimistically remove a single event from local state (used after soft-delete)
+  const removeEventLocally = useCallback((eventId: string) => {
+    setEvents(prev => prev.filter(e => e.id !== eventId));
+  }, []);
+
+  // Re-fetch events from DB (used to revert optimistic update on error)
+  const reloadEvents = useCallback(async () => {
+    if (!roomId) return;
+    const { data } = await supabase
+      .from('events')
+      .select('*')
+      .eq('room_id', roomId)
+      .order('created_at', { ascending: true });
+    if (data) setEvents(data as BobnikEvent[]);
+  }, [roomId]);
 
   const setMemberAura = useCallback(async (memberId: string, auraType: string) => {
     const expiresAt = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
@@ -259,6 +280,8 @@ export function useRoomStore(roomId: string | null) {
     undoLastEvent,
     dismissUndo,
     updateEventRatings,
+    removeEventLocally,
+    reloadEvents,
     setMemberAura,
     clearExpiredAuras,
     getTodayCount,
