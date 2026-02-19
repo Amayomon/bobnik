@@ -185,6 +185,14 @@ export type Database = {
         Args: { _room_id: string; _user_id: string }
         Returns: boolean
       }
+      restore_deleted_event: {
+        Args: { _event_id: string; _room_id: string }
+        Returns: undefined
+      }
+      soft_delete_event: {
+        Args: { _event_id: string; _room_id: string }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never
