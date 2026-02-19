@@ -74,27 +74,30 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
     return eventMember?.user_id === user?.id || isRoomOwner;
   })() : false;
 
-  // Soft delete handler
+  // Soft delete handler — uses SECURITY DEFINER RPC to bypass RLS UPDATE restriction
   const handleSoftDelete = useCallback(async (eventId: string) => {
-    if (!user) return;
+    if (!user || !roomId) return;
 
-    // Optimistic: remove from local state immediately so UI updates without waiting for realtime
+    console.log('[handleSoftDelete] eventId:', eventId, 'user.id:', user.id);
+
+    // Optimistic: remove from local state immediately
     store.removeEventLocally(eventId);
     setEditingEventId(null);
 
-    const { error } = await supabase.from('events').update({
-      is_deleted: true,
-      deleted_at: new Date().toISOString(),
-      deleted_by: user.id,
-    }).eq('id', eventId);
+    const { error } = await supabase.rpc('soft_delete_event', {
+      _event_id: eventId,
+      _room_id: roomId,
+    });
 
     if (error) {
-      console.error('Delete failed:', error);
+      console.error('[handleSoftDelete] RPC error:', JSON.stringify(error));
       // Revert: reload events from DB
       store.reloadEvents();
       toast.error('Nepodařilo se odebrat záznam');
       return;
     }
+
+    console.log('[handleSoftDelete] success for event:', eventId);
 
     // Show undo toast
     const timeout = setTimeout(() => {
@@ -109,19 +112,22 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
       action: {
         label: 'VRÁTIT',
         onClick: async () => {
-          await supabase.from('events').update({
-            is_deleted: false,
-            deleted_at: null,
-            deleted_by: null,
-          }).eq('id', eventId);
-          // Reload to restore the reverted event in local state
-          store.reloadEvents();
+          const { error: restoreError } = await supabase.rpc('restore_deleted_event', {
+            _event_id: eventId,
+            _room_id: roomId,
+          });
+          if (restoreError) {
+            console.error('[restore] RPC error:', JSON.stringify(restoreError));
+            toast.error('Nepodařilo se obnovit záznam');
+          } else {
+            store.reloadEvents();
+          }
           clearTimeout(timeout);
           setDeletedEvent(null);
         },
       },
     });
-  }, [user, deletedEvent]);
+  }, [user, roomId, deletedEvent]);
 
   const handleMenuNavigate = useCallback((target: 'room' | 'log' | 'stats' | 'profile' | 'invite' | 'settings' | 'lobby' | 'logout') => {
     if (target === 'invite') {
