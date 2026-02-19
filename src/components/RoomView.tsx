@@ -77,13 +77,24 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
   // Soft delete handler
   const handleSoftDelete = useCallback(async (eventId: string) => {
     if (!user) return;
-    await supabase.from('events').update({
+
+    // Optimistic: remove from local state immediately so UI updates without waiting for realtime
+    store.removeEventLocally(eventId);
+    setEditingEventId(null);
+
+    const { error } = await supabase.from('events').update({
       is_deleted: true,
       deleted_at: new Date().toISOString(),
       deleted_by: user.id,
     }).eq('id', eventId);
 
-    setEditingEventId(null);
+    if (error) {
+      console.error('Delete failed:', error);
+      // Revert: reload events from DB
+      store.reloadEvents();
+      toast.error('Nepodařilo se odebrat záznam');
+      return;
+    }
 
     // Show undo toast
     const timeout = setTimeout(() => {
@@ -103,6 +114,8 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
             deleted_at: null,
             deleted_by: null,
           }).eq('id', eventId);
+          // Reload to restore the reverted event in local state
+          store.reloadEvents();
           clearTimeout(timeout);
           setDeletedEvent(null);
         },
