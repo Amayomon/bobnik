@@ -24,6 +24,8 @@ interface BobnikEvent {
   effort: number;
   notary_present: boolean;
   special_type: string | null;
+  neptunes_touch: boolean;
+  phantom_cone: boolean;
 }
 
 function getStartOfDay(date: Date): Date {
@@ -115,6 +117,8 @@ export function useRoomStore(roomId: string | null) {
       consistency: 0, smell: 0, size: 0, effort: 0,
       notary_present: false,
       special_type: null,
+      neptunes_touch: false,
+      phantom_cone: false,
     };
     setEvents(prev => [...prev, optimisticEvent]);
 
@@ -150,7 +154,7 @@ export function useRoomStore(roomId: string | null) {
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
   }, []);
 
-  const updateEventRatings = useCallback(async (eventId: string, ratings: { consistency: number; smell: number; size: number; effort: number; notary_present?: boolean; special_type?: string | null }) => {
+  const updateEventRatings = useCallback(async (eventId: string, ratings: { consistency: number; smell: number; size: number; effort: number; notary_present?: boolean; special_type?: string | null; neptunes_touch?: boolean; phantom_cone?: boolean }) => {
     await supabase.from('events').update(ratings).eq('id', eventId);
   }, []);
 

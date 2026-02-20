@@ -16,6 +16,8 @@ interface BobnikEvent {
   effort: number;
   notary_present: boolean;
   special_type: string | null;
+  neptunes_touch: boolean;
+  phantom_cone: boolean;
 }
 
 interface MemberInfo {
@@ -184,7 +186,11 @@ export function StatsScreen({
     const demonic = scopedEvents.filter(e => e.special_type === 'demonic').length;
     const notary = scopedEvents.filter(e => e.notary_present).length;
     const notaryPct = total > 0 ? Math.round((notary / total) * 100) : 0;
-    return { total, avgPerDay, angelic, demonic, notaryPct };
+    const neptunes = scopedEvents.filter(e => e.neptunes_touch).length;
+    const neptunesPct = total > 0 ? Math.round((neptunes / total) * 100) : 0;
+    const phantom = scopedEvents.filter(e => e.phantom_cone).length;
+    const phantomPct = total > 0 ? Math.round((phantom / total) * 100) : 0;
+    return { total, avgPerDay, angelic, demonic, notaryPct, neptunes, neptunesPct, phantom, phantomPct };
   }, [scopedEvents, periodDays]);
 
   /* ═══ B — Denní vývoj ═══ */
@@ -403,6 +409,8 @@ export function StatsScreen({
           <StatCard label="📊 Ø / den" value={summary.avgPerDay} sub="Průměrná denní aktivita." />
           <StatCard label="⚖ Andělské · Ďábelské" value={`${summary.angelic} · ${summary.demonic}`} sub="Poměr světlých a temných zásahů." />
           <StatCard label="🖋 Notář" value={`${summary.notaryPct}%`} sub="Podíl oficiálně doložených záznamů." />
+          <StatCard label="🌊 Neptune's Touch" value={`${summary.neptunes} (${summary.neptunesPct}%)`} sub="Porcelánový křest vodou." />
+          <StatCard label="👻 Phantom Cone" value={`${summary.phantom} (${summary.phantomPct}%)`} sub="Zmizelo beze svědků." />
         </div>
 
         {/* ── B. Denní vývoj ── */}

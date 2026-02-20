@@ -9,13 +9,27 @@ import {
 
 interface EventRatingPopupProps {
   open: boolean;
-  onSave: (ratings: { consistency: number; smell: number; size: number; effort: number; notary_present: boolean }) => void;
+  onSave: (ratings: {
+    consistency: number;
+    smell: number;
+    size: number;
+    effort: number;
+    notary_present: boolean;
+    neptunes_touch: boolean;
+    phantom_cone: boolean;
+  }) => void;
   onSkip: () => void;
   onUndo: () => void;
   canUndo: boolean;
-  /** When editing an existing event, pre-fill values */
-  editValues?: { consistency: number; smell: number; size: number; effort: number; notary_present: boolean } | null;
-  /** Show delete button in edit mode */
+  editValues?: {
+    consistency: number;
+    smell: number;
+    size: number;
+    effort: number;
+    notary_present: boolean;
+    neptunes_touch: boolean;
+    phantom_cone: boolean;
+  } | null;
   onDelete?: () => void;
 }
 
@@ -40,7 +54,7 @@ function SegmentedControl({
   rightLabel: string;
 }) {
   return (
-    <div className="space-y-1">
+    <div className="space-y-0.5">
       <div className="flex justify-between text-[10px] text-muted-foreground px-0.5">
         <span>{leftLabel}</span>
         <span>{rightLabel}</span>
@@ -73,6 +87,41 @@ function SegmentedControl({
   );
 }
 
+function PhenomenonCheckbox({
+  checked,
+  onChange,
+  icon,
+  title,
+  description,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  icon: string;
+  title: string;
+  description: string;
+}) {
+  return (
+    <label className="flex items-start gap-3 cursor-pointer select-none group">
+      <div className="flex-1 min-w-0">
+        <span className="text-xs font-medium text-foreground">
+          {icon} {title}
+        </span>
+        <p className="text-[10px] text-muted-foreground/65 leading-tight mt-0.5">{description}</p>
+      </div>
+      <div className="pt-0.5">
+        <input
+          type="checkbox"
+          checked={checked}
+          onChange={(e) => onChange(e.target.checked)}
+          className={`h-4 w-4 rounded border-border accent-primary transition-transform ${
+            checked ? 'scale-105' : 'scale-100'
+          }`}
+        />
+      </div>
+    </label>
+  );
+}
+
 export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo, editValues, onDelete }: EventRatingPopupProps) {
   const [ratings, setRatings] = useState({
     consistency: 0,
@@ -81,9 +130,10 @@ export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo, editVa
     effort: 0,
   });
   const [notaryPresent, setNotaryPresent] = useState(false);
+  const [neptunesTouch, setNeptunesTouch] = useState(false);
+  const [phantomCone, setPhantomCone] = useState(false);
   const isEditMode = !!editValues;
 
-  // Pre-fill values when editing
   useEffect(() => {
     if (editValues) {
       setRatings({
@@ -93,9 +143,13 @@ export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo, editVa
         effort: editValues.effort,
       });
       setNotaryPresent(editValues.notary_present);
+      setNeptunesTouch(editValues.neptunes_touch);
+      setPhantomCone(editValues.phantom_cone);
     } else {
       setRatings({ consistency: 0, smell: 0, size: 0, effort: 0 });
       setNotaryPresent(false);
+      setNeptunesTouch(false);
+      setPhantomCone(false);
     }
   }, [editValues]);
 
@@ -103,32 +157,43 @@ export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo, editVa
     setRatings(prev => ({ ...prev, [key]: value }));
   };
 
-  const handleSave = () => {
-    onSave({ ...ratings, notary_present: notaryPresent });
+  const resetState = () => {
     setRatings({ consistency: 0, smell: 0, size: 0, effort: 0 });
     setNotaryPresent(false);
+    setNeptunesTouch(false);
+    setPhantomCone(false);
+  };
+
+  const handleSave = () => {
+    onSave({
+      ...ratings,
+      notary_present: notaryPresent,
+      neptunes_touch: neptunesTouch,
+      phantom_cone: phantomCone,
+    });
+    resetState();
   };
 
   const handleSkip = () => {
-    setRatings({ consistency: 0, smell: 0, size: 0, effort: 0 });
-    setNotaryPresent(false);
+    resetState();
     onSkip();
   };
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleSkip(); }}>
-      <DialogContent className="max-w-[360px] rounded-2xl p-5 gap-4 max-h-[85vh] overflow-y-auto">
-        <DialogHeader className="space-y-1">
+      <DialogContent className="max-w-[360px] rounded-2xl p-5 gap-3 max-h-[85vh] overflow-y-auto">
+        <DialogHeader className="space-y-0.5">
           <DialogTitle className="text-base font-bold">{isEditMode ? 'Upravit záznam' : 'Detaily záznamu'}</DialogTitle>
           <DialogDescription className="text-xs text-muted-foreground">
             {isEditMode ? 'Uprav vlastnosti nebo odeber záznam' : 'Ohodnoť vlastnosti (volitelné)'}
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4">
+        {/* Attribute ratings – compact */}
+        <div className="space-y-2.5">
           {ATTRIBUTES.map(attr => (
             <div key={attr.key}>
-              <p className="text-xs font-semibold text-foreground mb-1.5">{attr.label}</p>
+              <p className="text-xs font-semibold text-foreground mb-1 text-center">{attr.label}</p>
               <SegmentedControl
                 value={ratings[attr.key]}
                 onChange={(v) => updateRating(attr.key, v)}
@@ -139,7 +204,8 @@ export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo, editVa
           ))}
         </div>
 
-        <label className="flex items-center gap-2 cursor-pointer select-none">
+        {/* Notary checkbox */}
+        <label className="flex items-center gap-2 cursor-pointer select-none mt-1">
           <input
             type="checkbox"
             checked={notaryPresent}
@@ -149,6 +215,27 @@ export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo, editVa
           <span className="text-xs font-medium text-foreground">Přítomen notář</span>
         </label>
         <p className="text-[10px] text-muted-foreground/60 -mt-2 ml-6">Pro oficiální a historicky doložené záznamy.</p>
+
+        {/* Special Phenomena section */}
+        <div className="border-t border-border/40 pt-3 mt-1 space-y-2.5">
+          <p className="text-xs font-semibold text-foreground">🌊 Speciální jevy (volitelné)</p>
+
+          <PhenomenonCheckbox
+            checked={neptunesTouch}
+            onChange={setNeptunesTouch}
+            icon="🌊"
+            title="Neptune's Touch"
+            description="Porcelánový křest vodou."
+          />
+
+          <PhenomenonCheckbox
+            checked={phantomCone}
+            onChange={setPhantomCone}
+            icon="👻"
+            title="Phantom Cone"
+            description="Zmizelo beze svědků."
+          />
+        </div>
 
         <div className="flex gap-2 pt-1">
           <button
