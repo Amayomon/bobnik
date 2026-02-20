@@ -360,7 +360,7 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
             setRatingMemberId(null);
             store.undoLastEvent();
           }}
-          canUndo={!!store.undoEvent && !editingEventId}
+          canUndo={!!ratingEventId && !editingEventId}
           onDelete={canDeleteEditingEvent && editingEventId ? () => handleSoftDelete(editingEventId) : undefined}
         />
 

@@ -150,11 +150,8 @@ export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo, editVa
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleSkip(); }}>
       <DialogContent className="max-w-[360px] rounded-2xl p-5 gap-3 max-h-[85vh] overflow-y-auto">
-        <DialogHeader className="space-y-0.5">
+        <DialogHeader className="space-y-0">
           <DialogTitle className="text-base font-bold">{isEditMode ? 'Upravit záznam' : 'Detaily záznamu'}</DialogTitle>
-          <DialogDescription className="text-xs text-muted-foreground">
-            {isEditMode ? 'Uprav vlastnosti nebo odeber záznam' : 'Ohodnoť vlastnosti (volitelné)'}
-          </DialogDescription>
         </DialogHeader>
 
         {/* Attribute ratings – compact */}
