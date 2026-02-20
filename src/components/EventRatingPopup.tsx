@@ -47,17 +47,20 @@ function SegmentedControl({
   onChange,
   leftLabel,
   rightLabel,
+  title,
 }: {
   value: number;
   onChange: (v: number) => void;
   leftLabel: string;
   rightLabel: string;
+  title: string;
 }) {
   return (
     <div className="space-y-0.5">
-      <div className="flex justify-between text-[10px] text-muted-foreground px-0.5">
-        <span>{leftLabel}</span>
-        <span>{rightLabel}</span>
+      <div className="flex items-center justify-between text-[10px] px-0.5">
+        <span className="text-muted-foreground">{leftLabel}</span>
+        <span className="text-xs font-semibold text-foreground">{title}</span>
+        <span className="text-muted-foreground">{rightLabel}</span>
       </div>
       <div className="flex gap-0.5">
         {STEPS.map(step => {
@@ -84,41 +87,6 @@ function SegmentedControl({
         })}
       </div>
     </div>
-  );
-}
-
-function PhenomenonCheckbox({
-  checked,
-  onChange,
-  icon,
-  title,
-  description,
-}: {
-  checked: boolean;
-  onChange: (v: boolean) => void;
-  icon: string;
-  title: string;
-  description: string;
-}) {
-  return (
-    <label className="flex items-start gap-3 cursor-pointer select-none group">
-      <div className="flex-1 min-w-0">
-        <span className="text-xs font-medium text-foreground">
-          {icon} {title}
-        </span>
-        <p className="text-[10px] text-muted-foreground/65 leading-tight mt-0.5">{description}</p>
-      </div>
-      <div className="pt-0.5">
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
-          className={`h-4 w-4 rounded border-border accent-primary transition-transform ${
-            checked ? 'scale-105' : 'scale-100'
-          }`}
-        />
-      </div>
-    </label>
   );
 }
 
@@ -190,51 +158,72 @@ export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo, editVa
         </DialogHeader>
 
         {/* Attribute ratings – compact */}
-        <div className="space-y-2.5">
+        <div className="space-y-2">
           {ATTRIBUTES.map(attr => (
             <div key={attr.key}>
-              <p className="text-xs font-semibold text-foreground mb-1 text-center">{attr.label}</p>
               <SegmentedControl
                 value={ratings[attr.key]}
                 onChange={(v) => updateRating(attr.key, v)}
                 leftLabel={attr.left}
                 rightLabel={attr.right}
+                title={attr.label}
               />
             </div>
           ))}
         </div>
 
         {/* Notary checkbox */}
-        <label className="flex items-center gap-2 cursor-pointer select-none mt-1">
-          <input
-            type="checkbox"
-            checked={notaryPresent}
-            onChange={(e) => setNotaryPresent(e.target.checked)}
-            className="h-4 w-4 rounded border-border accent-primary"
-          />
-          <span className="text-xs font-medium text-foreground">Přítomen notář</span>
+        <label className="flex items-start gap-3 cursor-pointer select-none mt-1">
+          <div className="flex-1 min-w-0">
+            <span className="text-xs font-medium text-foreground">Přítomen notář</span>
+            <p className="text-[10px] text-muted-foreground/60 leading-tight mt-0.5">Pro oficiální a historicky doložené záznamy.</p>
+          </div>
+          <div className="pt-0.5">
+            <input
+              type="checkbox"
+              checked={notaryPresent}
+              onChange={(e) => setNotaryPresent(e.target.checked)}
+              className={`h-4 w-4 rounded border-border accent-primary transition-transform ${notaryPresent ? 'scale-105' : 'scale-100'}`}
+            />
+          </div>
         </label>
-        <p className="text-[10px] text-muted-foreground/60 -mt-2 ml-6">Pro oficiální a historicky doložené záznamy.</p>
 
         {/* Special Phenomena section */}
-        <div className="border-t border-border/40 pt-3 mt-1 space-y-2.5">
-          <p className="text-xs font-semibold text-foreground">🌊 Speciální jevy (volitelné)</p>
+        <div className="bg-muted/30 rounded-xl p-3 mt-1 space-y-2.5">
+          <div>
+            <p className="text-xs font-semibold text-foreground">Speciální jevy (volitelné)</p>
+            <p className="text-[10px] text-muted-foreground/60 leading-tight mt-0.5">Výjimečné události spojené se záznamem.</p>
+          </div>
 
-          <PhenomenonCheckbox
-            checked={neptunesTouch}
-            onChange={setNeptunesTouch}
-            icon="🌊"
-            title="Neptune's Touch"
-            description="Porcelánový křest vodou."
-          />
+          <label className="flex items-start gap-3 cursor-pointer select-none">
+            <div className="flex-1 min-w-0">
+              <span className="text-xs font-medium text-foreground">Neptunův dotek</span>
+              <p className="text-[10px] text-muted-foreground/65 leading-tight mt-0.5">Porcelánový křest vodou.</p>
+            </div>
+            <div className="pt-0.5">
+              <input
+                type="checkbox"
+                checked={neptunesTouch}
+                onChange={(e) => setNeptunesTouch(e.target.checked)}
+                className={`h-4 w-4 rounded border-border accent-primary transition-transform ${neptunesTouch ? 'scale-105' : 'scale-100'}`}
+              />
+            </div>
+          </label>
 
-          <PhenomenonCheckbox
-            checked={phantomCone}
-            onChange={setPhantomCone}
-            icon="👻"
-            title="Phantom Cone"
-            description="Zmizelo beze svědků."
-          />
+          <label className="flex items-start gap-3 cursor-pointer select-none">
+            <div className="flex-1 min-w-0">
+              <span className="text-xs font-medium text-foreground">Fantomská šiška</span>
+              <p className="text-[10px] text-muted-foreground/65 leading-tight mt-0.5">Zmizela beze svědků.</p>
+            </div>
+            <div className="pt-0.5">
+              <input
+                type="checkbox"
+                checked={phantomCone}
+                onChange={(e) => setPhantomCone(e.target.checked)}
+                className={`h-4 w-4 rounded border-border accent-primary transition-transform ${phantomCone ? 'scale-105' : 'scale-100'}`}
+              />
+            </div>
+          </label>
         </div>
 
         <div className="flex gap-2 pt-1">
