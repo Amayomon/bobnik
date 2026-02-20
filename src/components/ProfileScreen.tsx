@@ -18,6 +18,8 @@ interface BobnikEvent {
   effort: number;
   notary_present: boolean;
   special_type: string | null;
+  neptunes_touch: boolean;
+  phantom_cone: boolean;
 }
 
 interface Member {
@@ -84,13 +86,18 @@ export function ProfileScreen({ member, events, streak, onClose, onProfileUpdate
     const specialTotal = angelicCount + demonicCount;
     const specialRate = total > 0 ? Math.round((specialTotal / total) * 100) : 0;
 
+    const neptunesCount = myEvents.filter(e => e.neptunes_touch).length;
+    const neptunesPct = total > 0 ? Math.round((neptunesCount / total) * 100) : 0;
+    const phantomCount = myEvents.filter(e => e.phantom_cone).length;
+    const phantomPct = total > 0 ? Math.round((phantomCount / total) * 100) : 0;
+
     // Last special event
     const allMyEvents = events.filter(e => e.member_id === member.id && e.special_type);
     const lastSpecial = allMyEvents.length > 0
       ? new Date(allMyEvents.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())[0].created_at)
       : null;
 
-    return { total, avgPerDay, bestDay, notaryRate, angelicCount, demonicCount, specialRate, lastSpecial };
+    return { total, avgPerDay, bestDay, notaryRate, angelicCount, demonicCount, specialRate, lastSpecial, neptunesCount, neptunesPct, phantomCount, phantomPct };
   }, [myEvents, events, member.id]);
 
   // Daily chart (30 days)
@@ -226,6 +233,8 @@ export function ProfileScreen({ member, events, streak, onClose, onProfileUpdate
           <StatCard label="✨ Andělské" value={stats.angelicCount} sub="za 30 dní" />
           <StatCard label="🔥 Ďábelské" value={stats.demonicCount} sub="za 30 dní" />
           <StatCard label="Speciální %" value={`${stats.specialRate}%`} sub={stats.lastSpecial ? `Poslední: ${format(stats.lastSpecial, 'd.M.', { locale: cs })}` : 'Zatím žádné'} />
+          <StatCard label="🌊 Neptune" value={`${stats.neptunesCount} (${stats.neptunesPct}%)`} sub="za 30 dní" />
+          <StatCard label="👻 Phantom" value={`${stats.phantomCount} (${stats.phantomPct}%)`} sub="za 30 dní" />
         </div>
 
         {/* Personal daily chart */}

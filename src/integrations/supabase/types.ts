@@ -24,7 +24,9 @@ export type Database = {
           id: string
           is_deleted: boolean
           member_id: string
+          neptunes_touch: boolean
           notary_present: boolean
+          phantom_cone: boolean
           room_id: string
           size: number
           smell: number
@@ -40,7 +42,9 @@ export type Database = {
           id?: string
           is_deleted?: boolean
           member_id: string
+          neptunes_touch?: boolean
           notary_present?: boolean
+          phantom_cone?: boolean
           room_id: string
           size?: number
           smell?: number
@@ -56,7 +60,9 @@ export type Database = {
           id?: string
           is_deleted?: boolean
           member_id?: string
+          neptunes_touch?: boolean
           notary_present?: boolean
+          phantom_cone?: boolean
           room_id?: string
           size?: number
           smell?: number

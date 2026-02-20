@@ -65,6 +65,8 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
     size: editingEvent.size,
     effort: editingEvent.effort,
     notary_present: editingEvent.notary_present,
+    neptunes_touch: editingEvent.neptunes_touch,
+    phantom_cone: editingEvent.phantom_cone,
   } : null;
 
   // Check if current user can delete the editing event (own event OR room owner)
@@ -335,7 +337,10 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
             const targetId = editingEventId || ratingEventId;
             if (targetId) {
               const special = determineSpecialType(ratings);
-              const updateData = { ...ratings, special_type: special };
+              const updateData = {
+                ...ratings,
+                special_type: special,
+              };
               await store.updateEventRatings(targetId, updateData);
 
               if (special && ratingMemberId) {
