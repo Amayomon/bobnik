@@ -15,8 +15,8 @@ interface MemberRowProps {
 
 function getMicroTitle(count: number): string {
   if (count === 0) return 'Tichý pozorovatel';
-  if (count === 1) return 'Kosmická šlupka';
-  if (count === 2) return 'Dvojitý portál';
+  if (count === 1) return 'Zkušební střelec';
+  if (count === 2) return 'Taktický kanonýr';
   if (count === 3) return 'Polní dělostřelectvo';
   return 'Obléhací specialista';
 }

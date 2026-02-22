@@ -12,14 +12,14 @@ interface HamburgerMenuProps {
 }
 
 const menuItems: { key: 'room' | 'log' | 'stats' | 'profile' | 'invite' | 'settings' | 'lobby' | 'logout'; icon: string; label: string; divider?: boolean }[] = [
-  { key: 'room', icon: '🏠', label: 'Místnost' },
-  { key: 'log', icon: '📋', label: 'Log' },
-  { key: 'stats', icon: '📊', label: 'Statistiky' },
-  { key: 'profile', icon: '👤', label: 'Profil' },
-  { key: 'invite', icon: '🔗', label: 'Pozvat člena' },
-  { key: 'settings', icon: '⚙️', label: 'Nastavení' },
-  { key: 'lobby', icon: '🚪', label: 'Místnosti', divider: true },
-  { key: 'logout', icon: '👋', label: 'Odhlásit' },
+  { key: 'room', icon: '🏠', label: 'Kadní Komnata' },
+  { key: 'log', icon: '📋', label: 'Kronika kadů' },
+  { key: 'stats', icon: '📊', label: 'Bobnografie' },
+  { key: 'profile', icon: '👤', label: 'Můj Kadní Otisk' },
+  { key: 'invite', icon: '🔗', label: 'Přisrat Člena' },
+  { key: 'settings', icon: '⚙️', label: 'Hnědé Ladění' },
+  { key: 'lobby', icon: '🚪', label: 'Další bydety', divider: true },
+  { key: 'logout', icon: '👋', label: 'Spláchnout se' },
 ];
 
 export function HamburgerMenu({ open, onOpenChange, onNavigate }: HamburgerMenuProps) {
