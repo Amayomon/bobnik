@@ -18,7 +18,7 @@ const menuItems: { key: 'room' | 'log' | 'stats' | 'profile' | 'invite' | 'setti
   { key: 'profile', icon: '👤', label: 'Můj Kadní Otisk' },
   { key: 'invite', icon: '🔗', label: 'Přisrat Člena' },
   { key: 'settings', icon: '⚙️', label: 'Hnědé Ladění' },
-  { key: 'lobby', icon: '🚪', label: 'Další bydety', divider: true },
+  { key: 'lobby', icon: '🚪', label: 'Další komnaty', divider: true },
   { key: 'logout', icon: '👋', label: 'Spláchnout se' },
 ];
 

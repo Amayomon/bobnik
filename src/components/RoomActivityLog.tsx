@@ -74,7 +74,7 @@ export function RoomActivityLog({ events, members, onClose }: RoomActivityLogPro
     <div className="fixed inset-0 z-40 bg-background overflow-y-auto">
       <div className="max-w-md mx-auto p-4">
         <div className="flex items-center justify-between mb-5">
-          <h1 className="text-xl font-bold text-foreground">📋 Aktivita</h1>
+          <h1 className="text-xl font-bold text-foreground">📋 Kronika kadů</h1>
           <button onClick={onClose} className="text-muted-foreground text-xl p-1">✕</button>
         </div>
 
