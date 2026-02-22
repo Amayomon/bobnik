@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+#lovable-badge {
+  display: none !important;
+}
+
 @layer base {
   :root {
     --background: 30 50% 96%;
