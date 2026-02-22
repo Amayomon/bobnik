@@ -357,7 +357,7 @@ export function StatsScreen({
       <div className="max-w-md mx-auto p-4 pb-24">
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-lg font-bold text-foreground tracking-tight">Statistiky</h1>
+          <h1 className="text-lg font-bold text-foreground tracking-tight">📊 Bobnografie</h1>
           <button onClick={onClose} className="text-muted-foreground hover:text-foreground text-xl p-1 transition-colors">✕</button>
         </div>
 

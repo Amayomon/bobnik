@@ -155,7 +155,7 @@ export function ProfileScreen({ member, events, streak, onClose, onProfileUpdate
     <div className="fixed inset-0 z-40 bg-background overflow-y-auto">
       <div className="max-w-md mx-auto p-4 pb-20">
         <div className="flex items-center justify-between mb-5">
-          <h1 className="text-xl font-bold text-foreground">Profil</h1>
+          <h1 className="text-xl font-bold text-foreground">👤 Můj Kadní Otisk</h1>
           <button onClick={onClose} className="text-muted-foreground text-xl p-1">✕</button>
         </div>
 
