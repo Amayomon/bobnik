@@ -232,60 +232,57 @@
     font-family: 'Press Start 2P', monospace;
   }
 
-  .pixel-border {
-    border: 2px solid #5a3a1a;
-    box-shadow: inset 0 0 0 2px #c9b896, inset 0 0 0 4px #5a3a1a00;
-  }
-
   .pixel-card {
-    background: #e8dcc8;
+    background: #f0e8d8;
     border: 3px solid #5a3a1a;
     box-shadow:
-      inset 2px 2px 0 #f5eed8,
-      inset -2px -2px 0 #c4b396,
-      4px 4px 0 #3a250e;
-    border-radius: 2px;
+      inset 0 0 0 3px #c9b896,
+      inset 0 0 0 5px #a08a60,
+      6px 6px 0 rgba(30, 20, 10, 0.35);
+    border-radius: 6px;
+    background-image: url("data:image/svg+xml,%3Csvg width='4' height='4' viewBox='0 0 4 4' xmlns='http://www.w3.org/2000/svg'%3E%3Crect x='0' y='0' width='1' height='1' fill='%23d8cdb8' fill-opacity='0.3'/%3E%3C/svg%3E");
   }
 
   .pixel-track {
-    background: #d4c8aa;
-    border: 2px solid #8a6f44;
-    border-radius: 1px;
-    box-shadow: inset 1px 1px 0 #b8a880;
+    background: linear-gradient(180deg, #d8ccb0 0%, #e0d4b8 50%, #d4c8aa 100%);
+    border: 2px solid #a08a60;
+    border-radius: 4px;
+    box-shadow: inset 0 1px 2px rgba(90, 58, 26, 0.2);
   }
 
   .pixel-thumb {
-    background: linear-gradient(180deg, #f0a830 0%, #d48820 50%, #b87018 100%);
+    background: linear-gradient(180deg, #ffc048 0%, #f0a830 30%, #d48820 70%, #b87018 100%);
     border: 2px solid #5a3a1a;
     box-shadow:
-      inset 1px 1px 0 #ffd060,
-      inset -1px -1px 0 #a06010;
-    border-radius: 1px;
-    image-rendering: pixelated;
+      inset 0 2px 0 #ffd868,
+      inset 0 -2px 0 #a06010,
+      0 2px 0 rgba(58, 37, 14, 0.4);
+    border-radius: 4px;
   }
 
   .pixel-dot {
-    width: 6px;
-    height: 6px;
-    background: #a89878;
+    width: 5px;
+    height: 5px;
+    background: #b8a888;
     border-radius: 1px;
   }
 
   .pixel-dot-active {
-    background: #d09030;
+    background: #c89848;
   }
 
   .pixel-checkbox {
     appearance: none;
     -webkit-appearance: none;
-    width: 20px;
-    height: 20px;
-    background: #f0e8d8;
-    border: 2px solid #5a3a1a;
-    border-radius: 1px;
+    width: 22px;
+    height: 22px;
+    background: #f5eed8;
+    border: 2px solid #8a6f44;
+    border-radius: 3px;
     cursor: pointer;
     position: relative;
     flex-shrink: 0;
+    box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 #d8ccb0;
   }
 
   .pixel-checkbox:checked::after {
@@ -293,8 +290,8 @@
     position: absolute;
     top: 2px;
     left: 5px;
-    width: 5px;
-    height: 9px;
+    width: 6px;
+    height: 10px;
     border: solid #5a3a1a;
     border-width: 0 2px 2px 0;
     transform: rotate(45deg);
@@ -306,39 +303,39 @@
   }
 
   .pixel-btn-save {
-    background: linear-gradient(180deg, #f0a830 0%, #d48820 60%, #b87018 100%);
+    background: linear-gradient(180deg, #ffc048 0%, #f0a830 30%, #d48820 70%, #b87018 100%);
     border: 2px solid #5a3a1a;
     box-shadow:
-      inset 1px 1px 0 #ffd060,
-      inset -1px -1px 0 #a06010,
-      2px 2px 0 #3a250e;
-    border-radius: 2px;
+      inset 0 2px 0 #ffd868,
+      inset 0 -2px 0 #a06010,
+      0 3px 0 #3a250e;
+    border-radius: 5px;
     color: #3a250e;
   }
   .pixel-btn-save:active {
-    box-shadow: inset 1px 1px 0 #a06010;
-    transform: translate(1px, 1px);
+    box-shadow: inset 0 2px 0 #a06010;
+    transform: translateY(2px);
   }
 
   .pixel-btn-skip {
-    background: #e8dcc8;
-    border: 2px solid #5a3a1a;
+    background: linear-gradient(180deg, #f5eed8 0%, #e8dcc8 50%, #ddd0b8 100%);
+    border: 2px solid #8a6f44;
     box-shadow:
-      inset 1px 1px 0 #f5eed8,
-      inset -1px -1px 0 #c4b396,
-      2px 2px 0 #3a250e;
-    border-radius: 2px;
+      inset 0 1px 0 #fff,
+      inset 0 -1px 0 #c4b396,
+      0 2px 0 #5a3a1a;
+    border-radius: 5px;
     color: #5a3a1a;
   }
   .pixel-btn-skip:active {
-    box-shadow: inset 1px 1px 0 #c4b396;
-    transform: translate(1px, 1px);
+    box-shadow: inset 0 1px 0 #c4b396;
+    transform: translateY(2px);
   }
 
   .pixel-section {
-    background: #ddd0b8;
-    border: 2px solid #8a6f44;
-    border-radius: 1px;
-    box-shadow: inset 1px 1px 0 #eee4d0;
+    background: #e8e0cc;
+    border: 2px solid #a08a60;
+    border-radius: 4px;
+    box-shadow: inset 0 1px 0 #f5eed8;
   }
 }
