@@ -36,6 +36,7 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   // Edit mode: when editing an existing event from timeline
   const [editingEventId, setEditingEventId] = useState<string | null>(null);
+  const [viewingEventId, setViewingEventId] = useState<string | null>(null);
   // Soft-delete undo state
   const [deletedEvent, setDeletedEvent] = useState<{ id: string; timeout: NodeJS.Timeout } | null>(null);
 
@@ -52,27 +53,28 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
     }
   }, [store]);
 
-  // Handle clicking a timeline event to edit it
-  const handleEditEvent = useCallback((eventId: string) => {
-    setEditingEventId(eventId);
+  // Handle clicking a timeline event to view it (read-only)
+  const handleViewEvent = useCallback((eventId: string) => {
+    setViewingEventId(eventId);
   }, []);
 
   // Get edit values for the editing event
-  const editingEvent = editingEventId ? store.events.find(e => e.id === editingEventId) : null;
-  const editValues = editingEvent ? {
-    consistency: editingEvent.consistency,
-    smell: editingEvent.smell,
-    size: editingEvent.size,
-    effort: editingEvent.effort,
-    notary_present: editingEvent.notary_present,
-    neptunes_touch: editingEvent.neptunes_touch,
-    phantom_cone: editingEvent.phantom_cone,
+  const activeEventId = editingEventId || viewingEventId;
+  const activeEvent = activeEventId ? store.events.find(e => e.id === activeEventId) : null;
+  const editValues = activeEvent ? {
+    consistency: activeEvent.consistency,
+    smell: activeEvent.smell,
+    size: activeEvent.size,
+    effort: activeEvent.effort,
+    notary_present: activeEvent.notary_present,
+    neptunes_touch: activeEvent.neptunes_touch,
+    phantom_cone: activeEvent.phantom_cone,
   } : null;
 
   // Check if current user can delete the editing event (own event OR room owner)
   const isRoomOwner = !!user && store.roomCreatedBy === user.id;
-  const canDeleteEditingEvent = editingEvent ? (() => {
-    const eventMember = store.members.find(m => m.id === editingEvent.member_id);
+  const canDeleteEditingEvent = editingEventId && activeEvent ? (() => {
+    const eventMember = store.members.find(m => m.id === activeEvent.member_id);
     return eventMember?.user_id === user?.id || isRoomOwner;
   })() : false;
 
@@ -329,9 +331,10 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
           onNavigate={handleMenuNavigate}
         />
 
-        {/* Rating popup — new event or editing existing */}
+        {/* Rating popup — new event, editing existing, or viewing */}
         <EventRatingPopup
-          open={!!ratingEventId || !!editingEventId}
+          open={!!ratingEventId || !!editingEventId || !!viewingEventId}
+          mode={viewingEventId ? 'view' : editingEventId ? 'edit' : 'create'}
           editValues={editValues}
           onSave={async (ratings) => {
             const targetId = editingEventId || ratingEventId;
@@ -353,8 +356,9 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
             setRatingEventId(null);
             setRatingMemberId(null);
             setEditingEventId(null);
+            setViewingEventId(null);
           }}
-          onSkip={() => { setRatingEventId(null); setRatingMemberId(null); setEditingEventId(null); }}
+          onSkip={() => { setRatingEventId(null); setRatingMemberId(null); setEditingEventId(null); setViewingEventId(null); }}
           onUndo={() => {
             setRatingEventId(null);
             setRatingMemberId(null);
@@ -413,7 +417,7 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
             avg7={(store.getCountInRange(selectedMember.id, 7) / 7).toFixed(1)}
             avg30={(store.getCountInRange(selectedMember.id, 30) / 30).toFixed(1)}
             onClose={() => setSelectedMemberId(null)}
-            onEditEvent={handleEditEvent}
+            onEditEvent={handleViewEvent}
           />
         )}
 

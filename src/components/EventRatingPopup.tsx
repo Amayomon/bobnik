@@ -7,8 +7,11 @@ import {
   DialogDescription,
 } from '@/components/ui/dialog';
 
+type EventRatingMode = 'create' | 'edit' | 'view';
+
 interface EventRatingPopupProps {
   open: boolean;
+  mode?: EventRatingMode;
   onSave: (ratings: {
     consistency: number;
     smell: number;
@@ -48,12 +51,14 @@ function SegmentedControl({
   leftLabel,
   rightLabel,
   title,
+  disabled,
 }: {
   value: number;
   onChange: (v: number) => void;
   leftLabel: string;
   rightLabel: string;
   title: string;
+  disabled?: boolean;
 }) {
   return (
     <div className="space-y-0.5">
@@ -70,14 +75,16 @@ function SegmentedControl({
             <button
               key={step}
               type="button"
-              onClick={() => onChange(step)}
+              disabled={disabled}
+              onClick={() => { if (!disabled) onChange(step); }}
               className={`
                 flex-1 py-1.5 text-xs font-medium rounded-md transition-all
+                ${disabled ? 'cursor-default' : ''}
                 ${isSelected
                   ? 'bg-primary text-primary-foreground shadow-sm'
                   : isCenter
-                    ? 'bg-muted/80 text-foreground hover:bg-muted'
-                    : 'bg-muted/40 text-muted-foreground hover:bg-muted/60'
+                    ? 'bg-muted/80 text-foreground' + (disabled ? '' : ' hover:bg-muted')
+                    : 'bg-muted/40 text-muted-foreground' + (disabled ? '' : ' hover:bg-muted/60')
                 }
               `}
             >
@@ -90,7 +97,9 @@ function SegmentedControl({
   );
 }
 
-export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo, editValues, onDelete }: EventRatingPopupProps) {
+export function EventRatingPopup({ open, mode: modeProp, onSave, onSkip, onUndo, canUndo, editValues, onDelete }: EventRatingPopupProps) {
+  const mode: EventRatingMode = modeProp ?? (editValues ? 'edit' : 'create');
+  const isReadOnly = mode === 'view';
   const [ratings, setRatings] = useState({
     consistency: 0,
     smell: 0,
@@ -100,7 +109,6 @@ export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo, editVa
   const [notaryPresent, setNotaryPresent] = useState(false);
   const [neptunesTouch, setNeptunesTouch] = useState(false);
   const [phantomCone, setPhantomCone] = useState(false);
-  const isEditMode = !!editValues;
 
   useEffect(() => {
     if (editValues) {
@@ -122,6 +130,7 @@ export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo, editVa
   }, [editValues]);
 
   const updateRating = (key: keyof typeof ratings, value: number) => {
+    if (isReadOnly) return;
     setRatings(prev => ({ ...prev, [key]: value }));
   };
 
@@ -133,6 +142,7 @@ export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo, editVa
   };
 
   const handleSave = () => {
+    if (isReadOnly) return;
     onSave({
       ...ratings,
       notary_present: notaryPresent,
@@ -151,7 +161,7 @@ export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo, editVa
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleSkip(); }}>
       <DialogContent className="max-w-[360px] rounded-2xl p-5 gap-3 max-h-[85vh] overflow-y-auto">
         <DialogHeader className="space-y-0">
-          <DialogTitle className="text-base font-bold">{isEditMode ? 'Upravit záznam' : 'Detaily záznamu'}</DialogTitle>
+          <DialogTitle className="text-base font-bold">{mode === 'view' ? 'Detail záznamu' : mode === 'edit' ? 'Upravit záznam' : 'Detaily záznamu'}</DialogTitle>
         </DialogHeader>
 
         {/* Attribute ratings – compact */}
@@ -164,13 +174,14 @@ export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo, editVa
                 leftLabel={attr.left}
                 rightLabel={attr.right}
                 title={attr.label}
+                disabled={isReadOnly}
               />
             </div>
           ))}
         </div>
 
         {/* Notary checkbox */}
-        <label className="flex items-start gap-3 cursor-pointer select-none mt-1">
+        <label className={`flex items-start gap-3 select-none mt-1 ${isReadOnly ? 'cursor-default' : 'cursor-pointer'}`}>
           <div className="flex-1 min-w-0">
             <span className="text-xs font-medium text-foreground">Přítomen notář</span>
             <p className="text-[10px] text-muted-foreground/60 leading-tight mt-0.5">Pro oficiální a historicky doložené záznamy.</p>
@@ -179,7 +190,8 @@ export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo, editVa
             <input
               type="checkbox"
               checked={notaryPresent}
-              onChange={(e) => setNotaryPresent(e.target.checked)}
+              disabled={isReadOnly}
+              onChange={(e) => { if (!isReadOnly) setNotaryPresent(e.target.checked); }}
               className={`h-4 w-4 rounded border-border accent-primary transition-transform ${notaryPresent ? 'scale-105' : 'scale-100'}`}
             />
           </div>
@@ -192,7 +204,7 @@ export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo, editVa
             <p className="text-[10px] text-muted-foreground/60 leading-tight mt-0.5">Výjimečné události spojené se záznamem.</p>
           </div>
 
-          <label className="flex items-start gap-3 cursor-pointer select-none">
+          <label className={`flex items-start gap-3 select-none ${isReadOnly ? 'cursor-default' : 'cursor-pointer'}`}>
             <div className="flex-1 min-w-0">
               <span className="text-xs font-medium text-foreground">Neptunův dotek</span>
               <p className="text-[10px] text-muted-foreground/65 leading-tight mt-0.5">Porcelánový křest vodou.</p>
@@ -201,13 +213,14 @@ export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo, editVa
               <input
                 type="checkbox"
                 checked={neptunesTouch}
-                onChange={(e) => setNeptunesTouch(e.target.checked)}
+                disabled={isReadOnly}
+                onChange={(e) => { if (!isReadOnly) setNeptunesTouch(e.target.checked); }}
                 className={`h-4 w-4 rounded border-border accent-primary transition-transform ${neptunesTouch ? 'scale-105' : 'scale-100'}`}
               />
             </div>
           </label>
 
-          <label className="flex items-start gap-3 cursor-pointer select-none">
+          <label className={`flex items-start gap-3 select-none ${isReadOnly ? 'cursor-default' : 'cursor-pointer'}`}>
             <div className="flex-1 min-w-0">
               <span className="text-xs font-medium text-foreground">Fantomská šiška</span>
               <p className="text-[10px] text-muted-foreground/65 leading-tight mt-0.5">Zmizela beze svědků.</p>
@@ -216,42 +229,57 @@ export function EventRatingPopup({ open, onSave, onSkip, onUndo, canUndo, editVa
               <input
                 type="checkbox"
                 checked={phantomCone}
-                onChange={(e) => setPhantomCone(e.target.checked)}
+                disabled={isReadOnly}
+                onChange={(e) => { if (!isReadOnly) setPhantomCone(e.target.checked); }}
                 className={`h-4 w-4 rounded border-border accent-primary transition-transform ${phantomCone ? 'scale-105' : 'scale-100'}`}
               />
             </div>
           </label>
         </div>
 
-        <div className="flex gap-2 pt-1">
-          <button
-            onClick={handleSave}
-            className="flex-1 bg-primary text-primary-foreground text-sm font-semibold py-2 rounded-xl hover:opacity-90 transition-opacity"
-          >
-            Uložit
-          </button>
-          <button
-            onClick={handleSkip}
-            className="flex-1 bg-muted text-muted-foreground text-sm font-semibold py-2 rounded-xl hover:bg-muted/80 transition-colors"
-          >
-            Přeskočit
-          </button>
-        </div>
-        {canUndo && !isEditMode && (
-          <button
-            onClick={onUndo}
-            className="w-full text-xs text-destructive font-medium py-1.5 hover:underline transition-colors"
-          >
-            ↩ Zpět (smazat záznam)
-          </button>
-        )}
-        {isEditMode && onDelete && (
-          <button
-            onClick={onDelete}
-            className="w-full text-xs text-destructive font-medium py-1.5 hover:underline transition-colors"
-          >
-            🗑 Odebrat záznam
-          </button>
+        {/* Action buttons */}
+        {isReadOnly ? (
+          <div className="pt-1">
+            <button
+              onClick={handleSkip}
+              className="w-full bg-muted text-muted-foreground text-sm font-semibold py-2 rounded-xl hover:bg-muted/80 transition-colors"
+            >
+              Zavřít
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={handleSave}
+                className="flex-1 bg-primary text-primary-foreground text-sm font-semibold py-2 rounded-xl hover:opacity-90 transition-opacity"
+              >
+                Uložit
+              </button>
+              <button
+                onClick={handleSkip}
+                className="flex-1 bg-muted text-muted-foreground text-sm font-semibold py-2 rounded-xl hover:bg-muted/80 transition-colors"
+              >
+                Přeskočit
+              </button>
+            </div>
+            {canUndo && mode === 'create' && (
+              <button
+                onClick={onUndo}
+                className="w-full text-xs text-destructive font-medium py-1.5 hover:underline transition-colors"
+              >
+                ↩ Zpět (smazat záznam)
+              </button>
+            )}
+            {mode === 'edit' && onDelete && (
+              <button
+                onClick={onDelete}
+                className="w-full text-xs text-destructive font-medium py-1.5 hover:underline transition-colors"
+              >
+                🗑 Odebrat záznam
+              </button>
+            )}
+          </>
         )}
       </DialogContent>
     </Dialog>
