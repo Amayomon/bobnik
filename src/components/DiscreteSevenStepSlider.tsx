@@ -60,13 +60,19 @@ export function DiscreteSevenStepSlider({
     onChange(next);
   }, [disabled, onChange, value]);
 
+  // Calculate thumb position: value -3..+3 maps to 0..6
+  const thumbIndex = value + 3;
+
   return (
-    <div className="space-y-0.5">
-      <div className="flex items-center justify-between text-[10px] px-0.5">
-        <span className="text-muted-foreground">{leftLabel}</span>
-        <span className="text-xs font-semibold text-foreground">{title}</span>
-        <span className="text-muted-foreground">{rightLabel}</span>
+    <div className="space-y-1">
+      {/* Labels row */}
+      <div className="flex items-center justify-between px-0.5">
+        <span className="text-[9px] pixel-font" style={{ color: '#8a6f44' }}>{leftLabel}</span>
+        <span className="text-[10px] pixel-font font-bold" style={{ color: '#3a250e' }}>{title}</span>
+        <span className="text-[9px] pixel-font" style={{ color: '#8a6f44' }}>{rightLabel}</span>
       </div>
+
+      {/* Track */}
       <div
         ref={trackRef}
         role="slider"
@@ -78,28 +84,34 @@ export function DiscreteSevenStepSlider({
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onKeyDown={handleKeyDown}
-        className={`flex gap-0.5 touch-none select-none ${disabled ? '' : 'cursor-pointer'}`}
+        className={`pixel-track relative h-8 touch-none select-none ${disabled ? '' : 'cursor-pointer'}`}
       >
-        {STEPS.map(step => {
-          const isSelected = value === step;
-          const isCenter = step === 0;
-          return (
+        {/* Step dots */}
+        <div className="absolute inset-0 flex items-center justify-between px-3">
+          {STEPS.map((step, i) => (
             <div
               key={step}
-              className={`
-                flex-1 py-1.5 text-xs font-medium rounded-md text-center transition-all pointer-events-none
-                ${isSelected
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : isCenter
-                    ? 'bg-muted/80 text-foreground'
-                    : 'bg-muted/40 text-muted-foreground'
-                }
-              `}
-            >
-              {step > 0 ? `+${step}` : step}
-            </div>
-          );
-        })}
+              className={`pixel-dot ${i <= thumbIndex ? 'pixel-dot-active' : ''}`}
+            />
+          ))}
+        </div>
+
+        {/* Min label inside track */}
+        <div className="absolute left-1 top-1/2 -translate-y-1/2 text-[8px] pixel-font" style={{ color: '#8a6f44' }}>
+          -3
+        </div>
+
+        {/* Thumb */}
+        <div
+          className="pixel-thumb absolute top-1/2 -translate-y-1/2 w-9 h-7 flex items-center justify-center pointer-events-none"
+          style={{
+            left: `calc(${(thumbIndex / 6) * 100}% - 18px)`,
+          }}
+        >
+          <span className="text-[10px] pixel-font font-bold" style={{ color: '#fff', textShadow: '1px 1px 0 #5a3a1a' }}>
+            {value > 0 ? `+${value}` : value}
+          </span>
+        </div>
       </div>
     </div>
   );
