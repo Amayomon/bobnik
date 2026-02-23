@@ -6,6 +6,7 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import { DiscreteSevenStepSlider } from '@/components/DiscreteSevenStepSlider';
 
 type EventRatingMode = 'create' | 'edit' | 'view';
 
@@ -43,59 +44,7 @@ const ATTRIBUTES = [
   { key: 'effort' as const, label: 'Úsilí', left: 'Snadné', right: 'Náročné' },
 ] as const;
 
-const STEPS = [-3, -2, -1, 0, 1, 2, 3];
-
-function SegmentedControl({
-  value,
-  onChange,
-  leftLabel,
-  rightLabel,
-  title,
-  disabled,
-}: {
-  value: number;
-  onChange: (v: number) => void;
-  leftLabel: string;
-  rightLabel: string;
-  title: string;
-  disabled?: boolean;
-}) {
-  return (
-    <div className="space-y-0.5">
-      <div className="flex items-center justify-between text-[10px] px-0.5">
-        <span className="text-muted-foreground">{leftLabel}</span>
-        <span className="text-xs font-semibold text-foreground">{title}</span>
-        <span className="text-muted-foreground">{rightLabel}</span>
-      </div>
-      <div className="flex gap-0.5">
-        {STEPS.map(step => {
-          const isSelected = value === step;
-          const isCenter = step === 0;
-          return (
-            <button
-              key={step}
-              type="button"
-              disabled={disabled}
-              onClick={() => { if (!disabled) onChange(step); }}
-              className={`
-                flex-1 py-1.5 text-xs font-medium rounded-md transition-all
-                ${disabled ? 'cursor-default' : ''}
-                ${isSelected
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : isCenter
-                    ? 'bg-muted/80 text-foreground' + (disabled ? '' : ' hover:bg-muted')
-                    : 'bg-muted/40 text-muted-foreground' + (disabled ? '' : ' hover:bg-muted/60')
-                }
-              `}
-            >
-              {step > 0 ? `+${step}` : step}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
+// SegmentedControl removed – using DiscreteSevenStepSlider instead
 
 export function EventRatingPopup({ open, mode: modeProp, onSave, onSkip, onUndo, canUndo, editValues, onDelete }: EventRatingPopupProps) {
   const mode: EventRatingMode = modeProp ?? (editValues ? 'edit' : 'create');
@@ -168,7 +117,7 @@ export function EventRatingPopup({ open, mode: modeProp, onSave, onSkip, onUndo,
         <div className="space-y-2">
           {ATTRIBUTES.map(attr => (
             <div key={attr.key}>
-              <SegmentedControl
+              <DiscreteSevenStepSlider
                 value={ratings[attr.key]}
                 onChange={(v) => updateRating(attr.key, v)}
                 leftLabel={attr.left}
