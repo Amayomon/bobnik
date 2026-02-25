@@ -296,6 +296,7 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
           <StatsScreen
             members={membersForStats}
             events={store.events}
+            roomCreatedAt={store.roomCreatedAt}
             getCountInRange={store.getCountInRange}
             getAllTimeCount={store.getAllTimeCount}
             getStreak={store.getStreak}

@@ -30,6 +30,7 @@ interface MemberInfo {
 interface StatsScreenProps {
   members: MemberInfo[];
   events: BobnikEvent[];
+  roomCreatedAt: string | null;
   getCountInRange: (memberId: string, days: number) => number;
   getAllTimeCount: (memberId: string) => number;
   getStreak: (memberId: string) => number;
@@ -155,7 +156,7 @@ function HeatmapGrid({ grid, dayLabels }: {
 
 /* ── Main component ── */
 export function StatsScreen({
-  members, events, getCountInRange, getAllTimeCount, getStreak, getHeatmapData, onClose,
+  members, events, roomCreatedAt, getCountInRange, getAllTimeCount, getStreak, getHeatmapData, onClose,
 }: StatsScreenProps) {
   const [period, setPeriod] = useState<Period>('7');
   const [viewMode, setViewMode] = useState<'room' | string>('room');
@@ -195,23 +196,36 @@ export function StatsScreen({
 
   /* ═══ B — Denní vývoj ═══ */
   const dailyChart = useMemo(() => {
-    if (period === 'today') return null; // handled differently
-    const days = period === 'all' ? 90 : periodDays;
+    if (period === 'today') return null;
     const byScope = viewMode === 'room' ? events : events.filter(e => e.member_id === viewMode);
+    const today = getStartOfDay(new Date());
+
+    // Determine start date
+    let startDate: Date;
+    if (period === 'all') {
+      // Use room creation date as the beginning of the timeline
+      startDate = roomCreatedAt ? getStartOfDay(new Date(roomCreatedAt)) : today;
+    } else {
+      const daysBack = period === '7' ? 7 : 30;
+      startDate = new Date(today);
+      startDate.setDate(startDate.getDate() - (daysBack - 1));
+    }
+
+    // Generate complete day series from startDate to today
     const data: { date: string; count: number }[] = [];
-    for (let i = days - 1; i >= 0; i--) {
-      const d = new Date();
-      d.setDate(d.getDate() - i);
-      const start = getStartOfDay(d);
+    const cursor = new Date(startDate);
+    while (cursor <= today) {
+      const start = getStartOfDay(cursor);
       const end = new Date(start);
       end.setDate(end.getDate() + 1);
       data.push({
         date: format(start, 'd.M.', { locale: cs }),
         count: byScope.filter(e => { const t = new Date(e.created_at); return t >= start && t < end; }).length,
       });
+      cursor.setDate(cursor.getDate() + 1);
     }
     return data;
-  }, [events, period, periodDays, viewMode]);
+  }, [events, period, viewMode, roomCreatedAt]);
 
   /* ═══ C — Kvalita záznamů ═══ */
   const attrAvg = useMemo(() => {
