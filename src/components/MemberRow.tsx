@@ -45,12 +45,12 @@ export function MemberRow({
   return (
     <div
       onClick={onTap}
-      className={`flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer select-none transition-colors duration-150 parchment-card ${auraClass}`}
+      className={`flex items-center gap-3 px-4 py-2.5 rounded-xl cursor-pointer select-none transition-colors duration-150 hover:bg-row-hover ${auraClass}`}
     >
       <div className="flex items-center gap-2 flex-1 min-w-0">
         <span className="text-2xl" role="img">{member.emoji}</span>
         <div className="flex flex-col min-w-0">
-          <span className="font-bold text-foreground truncate flex items-center gap-1">
+          <span className="font-semibold text-foreground truncate flex items-center gap-1">
             {member.name}
             {aura === 'angelic' && <span className="text-xs opacity-70">😇</span>}
             {aura === 'demonic' && <span className="text-xs opacity-70">😈</span>}
@@ -63,7 +63,7 @@ export function MemberRow({
         <div className={`flex items-center rounded-full px-3 py-1 gap-0 ${getPillTint(todayCount)} transition-all duration-300 ${bumping ? 'scale-105' : 'scale-100'}`}>
           <span className="text-[11px] font-medium text-muted-foreground">Denní úroda</span>
           <span className="mx-1.5 w-px h-3 bg-muted-foreground/20" />
-          <span className={`text-[13px] font-bold text-foreground tabular-nums leading-none transition-transform duration-300 ${bumping ? 'animate-count-bump' : ''}`}>
+          <span className={`text-[13px] font-semibold text-foreground tabular-nums leading-none transition-transform duration-300 ${bumping ? 'animate-count-bump' : ''}`}>
             {todayCount}
           </span>
         </div>
@@ -75,7 +75,6 @@ export function MemberRow({
               <div
                 key={i}
                 className={`rounded-full ${filled ? 'bg-dot-filled' : 'bg-dot-empty/40'} ${isToday ? 'w-2.5 h-2.5' : 'w-2 h-2'}`}
-                style={filled ? { boxShadow: '0 1px 3px hsl(25 60% 48% / 0.3)' } : undefined}
               />
             );
           })}

@@ -76,18 +76,6 @@ export default {
           foreground: "hsl(var(--undo-foreground))",
         },
         success: "hsl(var(--success))",
-        stone: {
-          dark: "hsl(var(--stone-dark))",
-          light: "hsl(var(--stone-light))",
-        },
-        parchment: {
-          DEFAULT: "hsl(var(--parchment))",
-          dark: "hsl(var(--parchment-dark))",
-        },
-        gold: {
-          DEFAULT: "hsl(var(--gold))",
-          glow: "hsl(var(--gold-glow))",
-        },
       },
       borderRadius: {
         lg: "var(--radius)",

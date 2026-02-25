@@ -1,5 +1,3 @@
-@import url('https://fonts.googleapis.com/css2?family=MedievalSharp&family=Nunito:wght@400;600;700;800&display=swap');
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -10,105 +8,90 @@
 
 @layer base {
   :root {
-    /* Fantasy stone/parchment palette */
-    --background: 30 30% 82%;
-    --foreground: 25 40% 18%;
+    --background: 30 50% 96%;
+    --foreground: 25 30% 20%;
 
-    --card: 35 35% 90%;
-    --card-foreground: 25 40% 18%;
+    --card: 30 40% 99%;
+    --card-foreground: 25 30% 20%;
 
-    --popover: 35 35% 90%;
-    --popover-foreground: 25 40% 18%;
+    --popover: 30 40% 99%;
+    --popover-foreground: 25 30% 20%;
 
-    --primary: 28 55% 42%;
-    --primary-foreground: 35 40% 93%;
+    --primary: 28 70% 48%;
+    --primary-foreground: 30 50% 98%;
 
-    --secondary: 30 25% 80%;
-    --secondary-foreground: 25 35% 22%;
+    --secondary: 30 30% 90%;
+    --secondary-foreground: 25 30% 25%;
 
-    --muted: 30 18% 78%;
-    --muted-foreground: 25 18% 45%;
+    --muted: 30 20% 92%;
+    --muted-foreground: 25 15% 50%;
 
-    --accent: 35 50% 50%;
-    --accent-foreground: 35 40% 93%;
+    --accent: 28 60% 55%;
+    --accent-foreground: 30 50% 98%;
 
-    --destructive: 0 55% 45%;
+    --destructive: 0 65% 55%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 30 20% 72%;
-    --input: 30 20% 72%;
-    --ring: 28 55% 42%;
+    --border: 30 25% 88%;
+    --input: 30 25% 88%;
+    --ring: 28 70% 48%;
 
-    --radius: 0.75rem;
+    --radius: 1rem;
 
-    --sidebar-background: 30 25% 80%;
-    --sidebar-foreground: 25 35% 22%;
-    --sidebar-primary: 28 55% 42%;
-    --sidebar-primary-foreground: 35 40% 93%;
-    --sidebar-accent: 30 20% 75%;
-    --sidebar-accent-foreground: 25 35% 22%;
-    --sidebar-border: 30 18% 68%;
-    --sidebar-ring: 28 55% 42%;
+    --sidebar-background: 30 30% 95%;
+    --sidebar-foreground: 25 30% 25%;
+    --sidebar-primary: 28 70% 48%;
+    --sidebar-primary-foreground: 30 50% 98%;
+    --sidebar-accent: 30 25% 90%;
+    --sidebar-accent-foreground: 25 30% 25%;
+    --sidebar-border: 30 20% 85%;
+    --sidebar-ring: 28 70% 48%;
 
-    /* Custom tokens – stone/parchment */
-    --header-gradient-from: 25 35% 45%;
-    --header-gradient-to: 22 30% 35%;
-    --dot-filled: 25 60% 48%;
-    --dot-empty: 30 15% 72%;
-    --count-bg: 35 30% 87%;
-    --stats-bg: 35 28% 85%;
-    --row-hover: 35 30% 86%;
-    --row-active: 35 35% 82%;
+    /* Custom tokens */
+    --header-gradient-from: 28 75% 55%;
+    --header-gradient-to: 28 65% 45%;
+    --dot-filled: 28 70% 48%;
+    --dot-empty: 30 15% 82%;
+    --count-bg: 30 35% 95%;
+    --stats-bg: 30 35% 93%;
+    --row-hover: 30 30% 94%;
+    --row-active: 30 40% 90%;
     --undo-bg: 25 25% 25%;
-    --undo-foreground: 35 35% 90%;
-    --success: 140 40% 40%;
-
-    /* Stone textures */
-    --stone-dark: 25 25% 38%;
-    --stone-light: 30 20% 65%;
-    --parchment: 38 40% 89%;
-    --parchment-dark: 35 30% 82%;
-    --gold: 40 70% 50%;
-    --gold-glow: 40 80% 60%;
+    --undo-foreground: 30 50% 96%;
+    --success: 140 45% 45%;
   }
 
   .dark {
-    --background: 25 20% 12%;
-    --foreground: 35 25% 85%;
-    --card: 25 18% 18%;
-    --card-foreground: 35 25% 85%;
-    --popover: 25 18% 18%;
-    --popover-foreground: 35 25% 85%;
-    --primary: 28 50% 48%;
-    --primary-foreground: 25 20% 10%;
-    --secondary: 25 15% 22%;
-    --secondary-foreground: 35 25% 80%;
-    --muted: 25 12% 20%;
-    --muted-foreground: 30 12% 50%;
-    --accent: 35 40% 40%;
-    --accent-foreground: 35 25% 85%;
-    --destructive: 0 50% 38%;
+    --background: 25 25% 10%;
+    --foreground: 30 30% 90%;
+    --card: 25 20% 14%;
+    --card-foreground: 30 30% 90%;
+    --popover: 25 20% 14%;
+    --popover-foreground: 30 30% 90%;
+    --primary: 28 65% 55%;
+    --primary-foreground: 25 25% 10%;
+    --secondary: 25 15% 20%;
+    --secondary-foreground: 30 30% 85%;
+    --muted: 25 15% 18%;
+    --muted-foreground: 30 15% 55%;
+    --accent: 28 50% 45%;
+    --accent-foreground: 30 30% 90%;
+    --destructive: 0 55% 40%;
     --destructive-foreground: 0 0% 100%;
-    --border: 25 12% 25%;
-    --input: 25 12% 25%;
-    --ring: 28 50% 48%;
-    --header-gradient-from: 25 30% 30%;
-    --header-gradient-to: 22 25% 22%;
-    --dot-filled: 25 55% 50%;
+    --border: 25 15% 22%;
+    --input: 25 15% 22%;
+    --ring: 28 65% 55%;
+    --header-gradient-from: 28 65% 45%;
+    --header-gradient-to: 28 55% 35%;
+    --dot-filled: 28 65% 55%;
     --dot-empty: 25 10% 30%;
-    --count-bg: 25 12% 20%;
-    --stats-bg: 25 12% 18%;
-    --row-hover: 25 12% 20%;
-    --row-active: 25 18% 24%;
-    --undo-bg: 35 18% 75%;
-    --undo-foreground: 25 20% 12%;
-    --success: 140 35% 35%;
-    --stone-dark: 25 18% 25%;
-    --stone-light: 30 15% 40%;
-    --parchment: 35 20% 22%;
-    --parchment-dark: 30 15% 18%;
-    --gold: 40 60% 45%;
-    --gold-glow: 40 70% 55%;
+    --count-bg: 25 15% 18%;
+    --stats-bg: 25 15% 16%;
+    --row-hover: 25 15% 16%;
+    --row-active: 25 20% 20%;
+    --undo-bg: 30 20% 80%;
+    --undo-foreground: 25 25% 10%;
+    --success: 140 40% 40%;
   }
 }
 
@@ -119,7 +102,7 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Nunito', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
   }
 }
@@ -131,37 +114,6 @@
       hsl(var(--header-gradient-from)) 0%,
       hsl(var(--header-gradient-to)) 100%
     );
-  }
-
-  .font-fantasy {
-    font-family: 'MedievalSharp', cursive;
-  }
-
-  .parchment-card {
-    background: hsl(var(--parchment));
-    border: 1px solid hsl(var(--border));
-    box-shadow:
-      0 2px 8px hsl(var(--foreground) / 0.08),
-      inset 0 1px 0 hsl(0 0% 100% / 0.3);
-  }
-
-  .stone-surface {
-    background: linear-gradient(
-      180deg,
-      hsl(var(--stone-light)) 0%,
-      hsl(var(--stone-dark)) 100%
-    );
-  }
-
-  .stone-button {
-    background: linear-gradient(
-      180deg,
-      hsl(var(--stone-light)) 0%,
-      hsl(var(--stone-dark)) 100%
-    );
-    box-shadow:
-      0 3px 8px hsl(var(--foreground) / 0.2),
-      inset 0 1px 0 hsl(0 0% 100% / 0.15);
   }
 
   .press-scale {
