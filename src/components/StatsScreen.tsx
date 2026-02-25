@@ -163,26 +163,38 @@ export function StatsScreen({
 
   const periodLabel = period === 'today' ? 'Dnes' : period === '7' ? '7 dní' : period === '30' ? '30 dní' : 'Celkem';
   const scopeLabel = viewMode === 'room' ? 'Místnost' : members.find(m => m.id === viewMode)?.name ?? '';
-  const periodDays = period === 'today' ? 1 : period === '7' ? 7 : period === '30' ? 30 : 365;
+
+  // Compute the actual rangeStart consistently for all sections
+  const rangeStart = useMemo(() => {
+    const today = getStartOfDay(new Date());
+    if (period === 'today') {
+      return today;
+    } else if (period === 'all') {
+      return roomCreatedAt ? getStartOfDay(new Date(roomCreatedAt)) : today;
+    } else {
+      const daysBack = period === '7' ? 7 : 30;
+      const d = new Date(today);
+      d.setDate(d.getDate() - (daysBack - 1));
+      return d;
+    }
+  }, [period, roomCreatedAt]);
+
+  // Total calendar days in range (inclusive)
+  const totalDaysInRange = useMemo(() => {
+    const today = getStartOfDay(new Date());
+    return Math.max(1, Math.round((today.getTime() - rangeStart.getTime()) / (1000 * 60 * 60 * 24)) + 1);
+  }, [rangeStart]);
 
   /* ═══ Single source of truth: scoped + time-filtered events ═══ */
   const scopedEvents = useMemo(() => {
     const byScope = viewMode === 'room' ? events : events.filter(e => e.member_id === viewMode);
-    if (period === 'all') return byScope;
-    const cutoff = new Date();
-    if (period === 'today') {
-      cutoff.setHours(0, 0, 0, 0);
-    } else {
-      cutoff.setDate(cutoff.getDate() - periodDays);
-      cutoff.setHours(0, 0, 0, 0);
-    }
-    return byScope.filter(e => new Date(e.created_at) >= cutoff);
-  }, [events, viewMode, period, periodDays]);
+    return byScope.filter(e => new Date(e.created_at) >= rangeStart);
+  }, [events, viewMode, rangeStart]);
 
   /* ═══ A — Souhrn ═══ */
   const summary = useMemo(() => {
     const total = scopedEvents.length;
-    const avgPerDay = periodDays > 0 ? (total / periodDays).toFixed(1) : '0';
+    const avgPerDay = totalDaysInRange > 0 ? (total / totalDaysInRange).toFixed(1) : '0';
     const angelic = scopedEvents.filter(e => e.special_type === 'angelic').length;
     const demonic = scopedEvents.filter(e => e.special_type === 'demonic').length;
     const notary = scopedEvents.filter(e => e.notary_present).length;
@@ -192,7 +204,7 @@ export function StatsScreen({
     const phantom = scopedEvents.filter(e => e.phantom_cone).length;
     const phantomPct = total > 0 ? Math.round((phantom / total) * 100) : 0;
     return { total, avgPerDay, angelic, demonic, notaryPct, neptunes, neptunesPct, phantom, phantomPct };
-  }, [scopedEvents, periodDays]);
+  }, [scopedEvents, totalDaysInRange]);
 
   /* ═══ B — Denní vývoj ═══ */
   const dailyChart = useMemo(() => {
@@ -242,18 +254,7 @@ export function StatsScreen({
 
   /* ═══ D — Žebříček ═══ */
   const leaderboard = useMemo(() => {
-    // Use scopedEvents time range but always room-wide for ranking
-    const cutoff = new Date();
-    if (period === 'today') {
-      cutoff.setHours(0, 0, 0, 0);
-    } else if (period !== 'all') {
-      cutoff.setDate(cutoff.getDate() - periodDays);
-      cutoff.setHours(0, 0, 0, 0);
-    }
-
-    const roomEvents = period === 'all'
-      ? events
-      : events.filter(e => new Date(e.created_at) >= cutoff);
+    const roomEvents = events.filter(e => new Date(e.created_at) >= rangeStart);
 
     const counts = new Map<string, number>();
     const angelics = new Map<string, number>();
@@ -280,7 +281,7 @@ export function StatsScreen({
         if (bPct !== aPct) return bPct - aPct;
         return a.id.localeCompare(b.id);
       });
-  }, [members, events, period, periodDays]);
+  }, [members, events, rangeStart]);
 
   const myRank = viewMode !== 'room'
     ? leaderboard.findIndex(m => m.id === viewMode) + 1
@@ -423,8 +424,8 @@ export function StatsScreen({
           <StatCard label="📊 Ø / den" value={summary.avgPerDay} sub="Průměrná denní aktivita." />
           <StatCard label="⚖ Andělské · Ďábelské" value={`${summary.angelic} · ${summary.demonic}`} sub="Poměr světlých a temných zásahů." />
           <StatCard label="🖋 Notář" value={`${summary.notaryPct}%`} sub="Podíl oficiálně doložených záznamů." />
-          <StatCard label="🌊 Neptune's Touch" value={`${summary.neptunes} (${summary.neptunesPct}%)`} sub="Porcelánový křest vodou." />
-          <StatCard label="👻 Phantom Cone" value={`${summary.phantom} (${summary.phantomPct}%)`} sub="Zmizelo beze svědků." />
+          <StatCard label="🌊 Neptunův polibek" value={`${summary.neptunes} (${summary.neptunesPct}%)`} sub="Porcelánový křest vodou." />
+          <StatCard label="👻 Fantomská šiška" value={`${summary.phantom} (${summary.phantomPct}%)`} sub="Zmizelo beze svědků." />
         </div>
 
         {/* ── B. Denní vývoj ── */}
