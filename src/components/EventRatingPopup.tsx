@@ -1,4 +1,11 @@
 import { useState, useEffect } from 'react';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from '@/components/ui/dialog';
 import { DiscreteSevenStepSlider } from '@/components/DiscreteSevenStepSlider';
 
 type EventRatingMode = 'create' | 'edit' | 'view';
@@ -37,11 +44,16 @@ const ATTRIBUTES = [
   { key: 'effort' as const, label: 'Úsilí', left: 'Snadné', right: 'Náročné' },
 ] as const;
 
+// SegmentedControl removed – using DiscreteSevenStepSlider instead
+
 export function EventRatingPopup({ open, mode: modeProp, onSave, onSkip, onUndo, canUndo, editValues, onDelete }: EventRatingPopupProps) {
   const mode: EventRatingMode = modeProp ?? (editValues ? 'edit' : 'create');
   const isReadOnly = mode === 'view';
   const [ratings, setRatings] = useState({
-    consistency: 0, smell: 0, size: 0, effort: 0,
+    consistency: 0,
+    smell: 0,
+    size: 0,
+    effort: 0,
   });
   const [notaryPresent, setNotaryPresent] = useState(false);
   const [neptunesTouch, setNeptunesTouch] = useState(false);
@@ -94,45 +106,18 @@ export function EventRatingPopup({ open, mode: modeProp, onSave, onSkip, onUndo,
     onSkip();
   };
 
-  if (!open) return null;
-
-  const titleText = mode === 'view' ? 'Detail záznamu' : mode === 'edit' ? 'Upravit záznam' : 'Detaily záznamu';
-
   return (
-    <>
-      {/* Overlay – solid dark, no blur */}
-      <div
-        className="fixed inset-0 z-50"
-        style={{ background: 'rgba(30, 20, 10, 0.65)' }}
-        onClick={handleSkip}
-      />
+    <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleSkip(); }}>
+      <DialogContent className="max-w-[360px] rounded-2xl p-5 gap-3 max-h-[85vh] overflow-y-auto">
+        <DialogHeader className="space-y-0">
+          <DialogTitle className="text-base font-bold">{mode === 'view' ? 'Detail záznamu' : mode === 'edit' ? 'Upravit záznam' : 'Detaily záznamu'}</DialogTitle>
+        </DialogHeader>
 
-      {/* Pixel card modal */}
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
-        <div
-          className="pixel-card relative w-full max-w-[360px] p-5 pointer-events-auto max-h-[85vh] overflow-y-auto"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Header */}
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm pixel-font font-bold" style={{ color: '#3a250e' }}>
-              {titleText}
-            </h2>
-            <button
-              onClick={handleSkip}
-              className="text-lg pixel-font leading-none hover:opacity-70"
-              style={{ color: '#5a3a1a' }}
-              aria-label="Zavřít"
-            >
-              ✕
-            </button>
-          </div>
-
-          {/* Attribute sliders */}
-          <div className="space-y-3">
-            {ATTRIBUTES.map(attr => (
+        {/* Attribute ratings – compact */}
+        <div className="space-y-2">
+          {ATTRIBUTES.map(attr => (
+            <div key={attr.key}>
               <DiscreteSevenStepSlider
-                key={attr.key}
                 value={ratings[attr.key]}
                 onChange={(v) => updateRating(attr.key, v)}
                 leftLabel={attr.left}
@@ -140,121 +125,112 @@ export function EventRatingPopup({ open, mode: modeProp, onSave, onSkip, onUndo,
                 title={attr.label}
                 disabled={isReadOnly}
               />
-            ))}
-          </div>
-
-          {/* Notary checkbox */}
-          <label className={`flex items-center gap-3 mt-4 select-none ${isReadOnly ? 'cursor-default' : 'cursor-pointer'}`}>
-            <div className="flex-1 min-w-0">
-              <span className="text-[10px] pixel-font font-bold" style={{ color: '#3a250e' }}>
-                Přítomen notář ❤️
-              </span>
-              <p className="text-[8px] pixel-font mt-0.5" style={{ color: '#8a6f44' }}>
-                Pro oficiální a historicky doložené záznamy.
-              </p>
             </div>
+          ))}
+        </div>
+
+        {/* Notary checkbox */}
+        <label className={`flex items-start gap-3 select-none mt-1 ${isReadOnly ? 'cursor-default' : 'cursor-pointer'}`}>
+          <div className="flex-1 min-w-0">
+            <span className="text-xs font-medium text-foreground">Přítomen notář</span>
+            <p className="text-[10px] text-muted-foreground/60 leading-tight mt-0.5">Pro oficiální a historicky doložené záznamy.</p>
+          </div>
+          <div className="pt-0.5">
             <input
               type="checkbox"
               checked={notaryPresent}
               disabled={isReadOnly}
               onChange={(e) => { if (!isReadOnly) setNotaryPresent(e.target.checked); }}
-              className="pixel-checkbox"
+              className={`h-4 w-4 rounded border-border accent-primary transition-transform ${notaryPresent ? 'scale-105' : 'scale-100'}`}
             />
-          </label>
+          </div>
+        </label>
 
-          {/* Special Phenomena section */}
-          <div className="pixel-section p-3 mt-3 space-y-2.5">
-            <div>
-              <p className="text-[10px] pixel-font font-bold" style={{ color: '#3a250e' }}>
-                Speciální jevy (volitelné)
-              </p>
+        {/* Special Phenomena section */}
+        <div className="bg-muted/30 rounded-xl p-3 mt-1 space-y-2.5">
+          <div>
+            <p className="text-xs font-semibold text-foreground">Speciální jevy (volitelné)</p>
+            <p className="text-[10px] text-muted-foreground/60 leading-tight mt-0.5">Výjimečné události spojené se záznamem.</p>
+          </div>
+
+          <label className={`flex items-start gap-3 select-none ${isReadOnly ? 'cursor-default' : 'cursor-pointer'}`}>
+            <div className="flex-1 min-w-0">
+              <span className="text-xs font-medium text-foreground">Neptunův dotek</span>
+              <p className="text-[10px] text-muted-foreground/65 leading-tight mt-0.5">Porcelánový křest vodou.</p>
             </div>
-
-            <label className={`flex items-center gap-3 select-none ${isReadOnly ? 'cursor-default' : 'cursor-pointer'}`}>
-              <div className="flex-1 min-w-0">
-                <span className="text-[9px] pixel-font font-bold" style={{ color: '#3a250e' }}>
-                  Neptunův dotek
-                </span>
-                <p className="text-[7px] pixel-font mt-0.5" style={{ color: '#8a6f44' }}>
-                  Porcelánový křest vodou.
-                </p>
-              </div>
+            <div className="pt-0.5">
               <input
                 type="checkbox"
                 checked={neptunesTouch}
                 disabled={isReadOnly}
                 onChange={(e) => { if (!isReadOnly) setNeptunesTouch(e.target.checked); }}
-                className="pixel-checkbox"
+                className={`h-4 w-4 rounded border-border accent-primary transition-transform ${neptunesTouch ? 'scale-105' : 'scale-100'}`}
               />
-            </label>
+            </div>
+          </label>
 
-            <label className={`flex items-center gap-3 select-none ${isReadOnly ? 'cursor-default' : 'cursor-pointer'}`}>
-              <div className="flex-1 min-w-0">
-                <span className="text-[9px] pixel-font font-bold" style={{ color: '#3a250e' }}>
-                  Fantomská šiška
-                </span>
-                <p className="text-[7px] pixel-font mt-0.5" style={{ color: '#8a6f44' }}>
-                  Zmizela beze svědků.
-                </p>
-              </div>
+          <label className={`flex items-start gap-3 select-none ${isReadOnly ? 'cursor-default' : 'cursor-pointer'}`}>
+            <div className="flex-1 min-w-0">
+              <span className="text-xs font-medium text-foreground">Fantomská šiška</span>
+              <p className="text-[10px] text-muted-foreground/65 leading-tight mt-0.5">Zmizela beze svědků.</p>
+            </div>
+            <div className="pt-0.5">
               <input
                 type="checkbox"
                 checked={phantomCone}
                 disabled={isReadOnly}
                 onChange={(e) => { if (!isReadOnly) setPhantomCone(e.target.checked); }}
-                className="pixel-checkbox"
+                className={`h-4 w-4 rounded border-border accent-primary transition-transform ${phantomCone ? 'scale-105' : 'scale-100'}`}
               />
-            </label>
-          </div>
+            </div>
+          </label>
+        </div>
 
-          {/* Action buttons */}
-          {isReadOnly ? (
-            <div className="mt-4">
+        {/* Action buttons */}
+        {isReadOnly ? (
+          <div className="pt-1">
+            <button
+              onClick={handleSkip}
+              className="w-full bg-muted text-muted-foreground text-sm font-semibold py-2 rounded-xl hover:bg-muted/80 transition-colors"
+            >
+              Zavřít
+            </button>
+          </div>
+        ) : (
+          <>
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={handleSave}
+                className="flex-1 bg-primary text-primary-foreground text-sm font-semibold py-2 rounded-xl hover:opacity-90 transition-opacity"
+              >
+                Uložit
+              </button>
               <button
                 onClick={handleSkip}
-                className="pixel-btn-skip w-full py-2.5 text-[10px] pixel-font font-bold"
+                className="flex-1 bg-muted text-muted-foreground text-sm font-semibold py-2 rounded-xl hover:bg-muted/80 transition-colors"
               >
-                Zavřít
+                Přeskočit
               </button>
             </div>
-          ) : (
-            <>
-              <div className="flex gap-2 mt-4">
-                <button
-                  onClick={handleSave}
-                  className="pixel-btn-save flex-1 py-2.5 text-[10px] pixel-font font-bold"
-                >
-                  Uložit
-                </button>
-                <button
-                  onClick={handleSkip}
-                  className="pixel-btn-skip flex-1 py-2.5 text-[10px] pixel-font font-bold"
-                >
-                  Přeskočit
-                </button>
-              </div>
-              {canUndo && mode === 'create' && (
-                <button
-                  onClick={onUndo}
-                  className="w-full text-[8px] pixel-font font-bold py-2 mt-2 hover:opacity-70"
-                  style={{ color: '#a03030' }}
-                >
-                  ↩ Zpět (smazat záznam)
-                </button>
-              )}
-              {mode === 'edit' && onDelete && (
-                <button
-                  onClick={onDelete}
-                  className="w-full text-[8px] pixel-font font-bold py-2 mt-2 hover:opacity-70"
-                  style={{ color: '#a03030' }}
-                >
-                  🗑 Odebrat záznam
-                </button>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-    </>
+            {canUndo && mode === 'create' && (
+              <button
+                onClick={onUndo}
+                className="w-full text-xs text-destructive font-medium py-1.5 hover:underline transition-colors"
+              >
+                ↩ Zpět (smazat záznam)
+              </button>
+            )}
+            {mode === 'edit' && onDelete && (
+              <button
+                onClick={onDelete}
+                className="w-full text-xs text-destructive font-medium py-1.5 hover:underline transition-colors"
+              >
+                🗑 Odebrat záznam
+              </button>
+            )}
+          </>
+        )}
+      </DialogContent>
+    </Dialog>
   );
 }
