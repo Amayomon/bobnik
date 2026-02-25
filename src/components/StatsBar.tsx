@@ -18,7 +18,6 @@ interface StatsBarProps {
 
 export function StatsBar({ members, events, getCalendarWeekCount, getAllTimeCount, getStreak }: StatsBarProps) {
   const weeklyLeader = useMemo(() => {
-    // Current ISO week boundaries
     const now = new Date();
     const d = now.getDay();
     const diffToMonday = d === 0 ? 6 : d - 1;
@@ -31,11 +30,9 @@ export function StatsBar({ members, events, getCalendarWeekCount, getAllTimeCoun
     return [...members].sort((a, b) => {
       const countDiff = getCalendarWeekCount(b.id) - getCalendarWeekCount(a.id);
       if (countDiff !== 0) return countDiff;
-      // Tie-breaker 1: more angelic events this week
       const angelicA = weekEvents.filter(e => e.member_id === a.id && e.special_type === 'angelic').length;
       const angelicB = weekEvents.filter(e => e.member_id === b.id && e.special_type === 'angelic').length;
       if (angelicB !== angelicA) return angelicB - angelicA;
-      // Tie-breaker 2: name ASC
       return a.name.localeCompare(b.name);
     })[0];
   }, [members, events, getCalendarWeekCount]);
@@ -56,16 +53,16 @@ export function StatsBar({ members, events, getCalendarWeekCount, getAllTimeCoun
   };
 
   return (
-    <div className="flex items-center justify-between gap-3 px-4 py-2.5 bg-card rounded-xl shadow-[0_2px_8px_hsl(var(--foreground)/0.06)]">
-      <button onClick={() => showLabel('Bobkař týdne')} className="text-sm font-semibold text-foreground truncate">
-        🏆 {weeklyLeader.name} ({leaderCount})
+    <div className="flex items-center justify-between gap-3 px-4 py-2.5 parchment-card rounded-xl">
+      <button onClick={() => showLabel('Bobkař týdne')} className="text-sm font-bold text-foreground truncate">
+        🏆 {weeklyLeader.name}
       </button>
-      <span className="text-muted-foreground/40 text-xs">|</span>
-      <button onClick={() => showLabel('Týdenní součet')} className="text-sm text-foreground whitespace-nowrap">📅 {weeklyTotal}</button>
-      <span className="text-muted-foreground/40 text-xs">|</span>
-      <button onClick={() => showLabel('Denní průměr')} className="text-sm text-foreground whitespace-nowrap">📊 {avgPerDay}</button>
-      <span className="text-muted-foreground/40 text-xs">|</span>
-      <button onClick={() => showLabel('Nejdelší série')} className="text-sm text-foreground whitespace-nowrap">🔥 {bestStreak}</button>
+      <span className="text-muted-foreground/30 text-xs">|</span>
+      <button onClick={() => showLabel('Týdenní součet')} className="text-sm text-foreground whitespace-nowrap font-semibold">📅 {weeklyTotal}</button>
+      <span className="text-muted-foreground/30 text-xs">|</span>
+      <button onClick={() => showLabel('Denní průměr')} className="text-sm text-foreground whitespace-nowrap font-semibold">📊 {avgPerDay}</button>
+      <span className="text-muted-foreground/30 text-xs">|</span>
+      <button onClick={() => showLabel('Nejdelší série')} className="text-sm text-foreground whitespace-nowrap font-semibold">🔥 {bestStreak}</button>
     </div>
   );
 }
