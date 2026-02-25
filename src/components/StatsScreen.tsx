@@ -239,6 +239,72 @@ export function StatsScreen({
     return data;
   }, [events, period, viewMode, roomCreatedAt]);
 
+  /* ═══ B2 — Vývoj statů ═══ */
+  type StatKey = 'consistency' | 'smell' | 'size' | 'effort';
+  type StatFilter = StatKey | 'all';
+  const [statFilter, setStatFilter] = useState<StatFilter>('all');
+
+  const statColors: Record<StatKey, string> = {
+    consistency: 'hsl(220, 70%, 55%)',
+    smell: 'hsl(35, 80%, 50%)',
+    size: 'hsl(150, 60%, 40%)',
+    effort: 'hsl(0, 65%, 55%)',
+  };
+  const statLabels: Record<StatKey, string> = {
+    consistency: 'Konzistence',
+    smell: 'Zápach',
+    size: 'Velikost',
+    effort: 'Úsilí',
+  };
+  const statKeys: StatKey[] = ['consistency', 'smell', 'size', 'effort'];
+
+  const statsChart = useMemo(() => {
+    if (period === 'today') return null;
+    const byScope = viewMode === 'room' ? events : events.filter(e => e.member_id === viewMode);
+    const today = getStartOfDay(new Date());
+
+    let startDate: Date;
+    if (period === 'all') {
+      startDate = roomCreatedAt ? getStartOfDay(new Date(roomCreatedAt)) : today;
+    } else {
+      const daysBack = period === '7' ? 7 : 30;
+      startDate = new Date(today);
+      startDate.setDate(startDate.getDate() - (daysBack - 1));
+    }
+
+    const data: { date: string; consistency: number | null; smell: number | null; size: number | null; effort: number | null; _count: number }[] = [];
+    const cursor = new Date(startDate);
+    while (cursor <= today) {
+      const start = getStartOfDay(cursor);
+      const end = new Date(start);
+      end.setDate(end.getDate() + 1);
+      const dayEvents = byScope.filter(e => { const t = new Date(e.created_at); return t >= start && t < end; });
+      const count = dayEvents.length;
+
+      const avg = (key: StatKey): number | null => {
+        const vals = dayEvents.filter(e => e[key] !== null && e[key] !== undefined);
+        if (vals.length === 0) return null;
+        return parseFloat((vals.reduce((s, e) => s + e[key], 0) / vals.length).toFixed(2));
+      };
+
+      data.push({
+        date: format(start, 'd.M.', { locale: cs }),
+        consistency: avg('consistency'),
+        smell: avg('smell'),
+        size: avg('size'),
+        effort: avg('effort'),
+        _count: count,
+      });
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    return data;
+  }, [events, period, viewMode, roomCreatedAt]);
+
+  const hasAnyStatData = useMemo(() => {
+    if (!statsChart) return false;
+    return statsChart.some(d => d.consistency !== null || d.smell !== null || d.size !== null || d.effort !== null);
+  }, [statsChart]);
+
   /* ═══ C — Kvalita záznamů ═══ */
   const attrAvg = useMemo(() => {
     const n = scopedEvents.length;
@@ -451,6 +517,74 @@ export function StatsScreen({
                 <Line type="monotone" dataKey="count" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} />
               </LineChart>
             </ResponsiveContainer>
+          )}
+        </div>
+
+        {/* ── B2. Vývoj statů ── */}
+        <SectionHeader title="Vývoj statů" sub="Časový průběh průměrných hodnot atributů." />
+        <div className="bg-card rounded-xl border border-border/60 p-3 mb-6">
+          {/* Toggle */}
+          <div className="flex gap-1 bg-muted rounded-lg p-0.5 mb-3">
+            {([...statKeys, 'all'] as StatFilter[]).map(k => (
+              <button
+                key={k}
+                onClick={() => setStatFilter(k)}
+                className={`flex-1 text-[10px] font-semibold py-1 rounded-md transition-colors ${
+                  statFilter === k ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {k === 'all' ? 'Vše' : statLabels[k]}
+              </button>
+            ))}
+          </div>
+
+          {period === 'today' ? (
+            <div className="flex items-center justify-center h-[100px]">
+              <p className="text-[11px] text-muted-foreground">Denní zobrazení není k dispozici.</p>
+            </div>
+          ) : !hasAnyStatData ? (
+            <div className="flex items-center justify-center h-[100px]">
+              <p className="text-[11px] text-muted-foreground">Zatím žádná data pro zobrazení.</p>
+            </div>
+          ) : (
+            <>
+              {statFilter === 'all' && (
+                <div className="flex gap-3 justify-end mb-1">
+                  {statKeys.map(k => (
+                    <div key={k} className="flex items-center gap-1">
+                      <div className="w-2 h-2 rounded-full" style={{ backgroundColor: statColors[k] }} />
+                      <span className="text-[9px] text-muted-foreground">{statLabels[k]}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <ResponsiveContainer width="100%" height={160}>
+                <LineChart data={statsChart!}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis dataKey="date" tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} interval={period === '30' || period === 'all' ? 'preserveStartEnd' : undefined} />
+                  <YAxis domain={[-3, 3]} tick={{ fontSize: 10, fill: 'hsl(var(--muted-foreground))' }} width={24} />
+                  <Tooltip
+                    contentStyle={{ background: 'hsl(var(--card))', border: '1px solid hsl(var(--border))', borderRadius: 8, fontSize: 12 }}
+                    labelStyle={{ color: 'hsl(var(--foreground))' }}
+                    formatter={(value: number | null, name: string) => {
+                      if (value === null) return ['–', statLabels[name as StatKey] ?? name];
+                      return [value, statLabels[name as StatKey] ?? name];
+                    }}
+                  />
+                  {(statFilter === 'all' ? statKeys : [statFilter]).map(k => (
+                    <Line
+                      key={k}
+                      type="monotone"
+                      dataKey={k}
+                      stroke={statColors[k]}
+                      strokeWidth={2}
+                      dot={false}
+                      connectNulls={false}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </>
           )}
         </div>
 
