@@ -119,13 +119,13 @@ export function EventRatingPopup({ open, mode: modeProp, onSave, onSkip, onUndo,
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleSkip(); }}>
-      <DialogContent className="max-w-[360px] rounded-2xl p-5 gap-3 max-h-[85vh] overflow-y-auto">
+      <DialogContent className="max-w-[360px] rounded-2xl p-5 gap-3 max-h-[85vh] overflow-y-auto" style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
         <DialogHeader className="space-y-0">
           <DialogTitle className="text-base font-bold">{mode === 'view' ? 'Detail záznamu' : mode === 'edit' ? 'Upravit záznam' : 'Detaily záznamu'}</DialogTitle>
         </DialogHeader>
 
         {/* Attribute ratings – compact */}
-        <div className="space-y-2">
+        <div className="space-y-3">
           {ATTRIBUTES.map(attr => (
             <div key={attr.key}>
               <DiscreteSevenStepSlider
@@ -158,9 +158,9 @@ export function EventRatingPopup({ open, mode: modeProp, onSave, onSkip, onUndo,
         </label>
 
         {/* Special Phenomena section */}
-        <div className="bg-muted/30 rounded-xl p-3 mt-1 space-y-2.5">
+        <div className="bg-muted/20 rounded-xl p-3 mt-2 space-y-2.5" style={{ boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.04)' }}>
           <div>
-            <p className="text-xs font-semibold text-foreground">Speciální jevy (volitelné)</p>
+            <p className="text-xs font-semibold text-foreground">Speciální jevy</p>
             <p className="text-[10px] text-muted-foreground/60 leading-tight mt-0.5">Výjimečné události spojené se záznamem.</p>
           </div>
 
