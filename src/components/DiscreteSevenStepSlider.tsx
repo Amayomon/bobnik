@@ -65,7 +65,7 @@ export function DiscreteSevenStepSlider({
   return (
     <div className="space-y-0">
       {/* Title centered */}
-      <p className="text-xs font-bold text-foreground text-center mb-0.5">{title}</p>
+      <p className="text-xs font-semibold text-foreground text-center mb-1">{title}</p>
 
       {/* Slider track */}
       <div
@@ -79,10 +79,24 @@ export function DiscreteSevenStepSlider({
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onKeyDown={handleKeyDown}
-        className={`relative h-8 touch-none select-none ${disabled ? '' : 'cursor-pointer'}`}
+        className={`relative h-9 touch-none select-none ${disabled ? '' : 'cursor-pointer'}`}
       >
         {/* Track background */}
-        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1.5 bg-muted/60 rounded-full mx-4" />
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 bg-muted/40 rounded-full mx-4" />
+
+        {/* Active segment tint */}
+        {(() => {
+          const centerPct = 50;
+          const thumbPct = (thumbIndex / 6) * 100;
+          const left = Math.min(centerPct, thumbPct);
+          const width = Math.abs(thumbPct - centerPct);
+          return (
+            <div
+              className="absolute top-1/2 -translate-y-1/2 h-1 rounded-full opacity-30 bg-primary mx-4"
+              style={{ left: `calc(${left}% * (100% - 32px) / 100 + 16px)`, width: `calc(${width}% * (100% - 32px) / 100)` }}
+            />
+          );
+        })()}
 
         {/* Dots & thumb */}
         <div className="absolute inset-x-4 top-0 bottom-0">
@@ -97,13 +111,15 @@ export function DiscreteSevenStepSlider({
               >
                 {isActive ? (
                   <div
-                    className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-md"
-                    style={{ boxShadow: '0 2px 8px hsl(var(--primary) / 0.35)' }}
+                    className="h-8 min-w-[3.25rem] px-3 rounded-full bg-primary flex items-center justify-center"
+                    style={{
+                      boxShadow: '0 6px 16px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.18)',
+                    }}
                   >
-                    <span className="text-xs font-bold text-primary-foreground">{value}</span>
+                    <span className="text-sm font-bold text-primary-foreground">{value}</span>
                   </div>
                 ) : (
-                  <div className="w-2 h-2 rounded-full bg-muted-foreground/25" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-muted-foreground/20" />
                 )}
               </div>
             );
@@ -112,7 +128,7 @@ export function DiscreteSevenStepSlider({
       </div>
 
       {/* Labels below */}
-      <div className="flex justify-between text-[10px] text-muted-foreground px-0.5 -mt-0.5">
+      <div className="flex justify-between text-[9px] text-muted-foreground/50 px-1 mt-0">
         <span>{leftLabel}</span>
         <span>{rightLabel}</span>
       </div>
