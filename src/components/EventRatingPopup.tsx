@@ -119,87 +119,80 @@ export function EventRatingPopup({ open, mode: modeProp, onSave, onSkip, onUndo,
 
   return (
     <Dialog open={open} onOpenChange={(isOpen) => { if (!isOpen) handleSkip(); }}>
-      <DialogContent className="max-w-[360px] rounded-2xl p-5 gap-3 max-h-[85vh] overflow-y-auto" style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
-        <DialogHeader className="space-y-0">
+      <DialogContent className="max-w-[360px] rounded-2xl p-4 gap-0 max-h-[85vh] overflow-y-auto" style={{ boxShadow: '0 20px 60px rgba(0,0,0,0.25)' }}>
+        <DialogHeader className="space-y-0 mb-3">
           <DialogTitle className="text-base font-bold">{mode === 'view' ? 'Detail záznamu' : mode === 'edit' ? 'Upravit záznam' : 'Detaily záznamu'}</DialogTitle>
         </DialogHeader>
 
-        {/* Attribute ratings – compact */}
-        <div className="space-y-3">
+        {/* Attribute ratings */}
+        <div className="flex flex-col" style={{ gap: '14px' }}>
           {ATTRIBUTES.map(attr => (
-            <div key={attr.key}>
-              <DiscreteSevenStepSlider
-                value={ratings[attr.key]}
-                onChange={(v) => updateRating(attr.key, v)}
-                leftLabel={attr.left}
-                rightLabel={attr.right}
-                title={attr.label}
-                disabled={isReadOnly}
-              />
-            </div>
+            <DiscreteSevenStepSlider
+              key={attr.key}
+              value={ratings[attr.key]}
+              onChange={(v) => updateRating(attr.key, v)}
+              leftLabel={attr.left}
+              rightLabel={attr.right}
+              title={attr.label}
+              disabled={isReadOnly}
+            />
           ))}
         </div>
 
         {/* Notary checkbox */}
-        <label className={`flex items-start gap-3 select-none mt-1 ${isReadOnly ? 'cursor-default' : 'cursor-pointer'}`}>
+        <label className={`flex items-center gap-3 select-none mt-3 ${isReadOnly ? 'cursor-default' : 'cursor-pointer'}`}>
           <div className="flex-1 min-w-0">
             <span className="text-xs font-medium text-foreground">Přítomen notář</span>
-            <p className="text-[10px] text-muted-foreground/60 leading-tight mt-0.5">Pro oficiální a historicky doložené záznamy.</p>
+            <p className="text-[10px] text-muted-foreground/60 leading-tight" style={{ marginTop: '1px' }}>Pro oficiální a historicky doložené záznamy.</p>
           </div>
-          <div className="pt-0.5">
-            <input
-              type="checkbox"
-              checked={notaryPresent}
-              disabled={isReadOnly}
-              onChange={(e) => { if (!isReadOnly) setNotaryPresent(e.target.checked); }}
-              className={`h-4 w-4 rounded border-border accent-primary transition-transform ${notaryPresent ? 'scale-105' : 'scale-100'}`}
-            />
-          </div>
+          <input
+            type="checkbox"
+            checked={notaryPresent}
+            disabled={isReadOnly}
+            onChange={(e) => { if (!isReadOnly) setNotaryPresent(e.target.checked); }}
+            className={`h-4 w-4 rounded border-border accent-primary transition-transform ${notaryPresent ? 'scale-105' : 'scale-100'}`}
+          />
         </label>
 
         {/* Special Phenomena section */}
-        <div className="bg-muted/20 rounded-xl p-3 mt-2 space-y-2.5" style={{ boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.04)' }}>
+        <div className="bg-muted/20 rounded-xl mt-3 space-y-2" style={{ padding: '10px 12px', boxShadow: 'inset 0 1px 3px rgba(0,0,0,0.04)' }}>
           <div>
             <p className="text-xs font-semibold text-foreground">Speciální jevy</p>
-            <p className="text-[10px] text-muted-foreground/60 leading-tight mt-0.5">Výjimečné události spojené se záznamem.</p>
+            <p className="text-[10px] text-muted-foreground/60 leading-tight" style={{ marginTop: '1px' }}>Výjimečné události spojené se záznamem.</p>
           </div>
 
-          <label className={`flex items-start gap-3 select-none ${isReadOnly ? 'cursor-default' : 'cursor-pointer'}`}>
+          <label className={`flex items-center gap-3 select-none ${isReadOnly ? 'cursor-default' : 'cursor-pointer'}`}>
             <div className="flex-1 min-w-0">
               <span className="text-xs font-medium text-foreground">Neptunův dotek</span>
-              <p className="text-[10px] text-muted-foreground/65 leading-tight mt-0.5">Porcelánový křest vodou.</p>
+              <p className="text-[10px] text-muted-foreground/65 leading-tight" style={{ marginTop: '1px' }}>Porcelánový křest vodou.</p>
             </div>
-            <div className="pt-0.5">
-              <input
-                type="checkbox"
-                checked={neptunesTouch}
-                disabled={isReadOnly}
-                onChange={(e) => { if (!isReadOnly) setNeptunesTouch(e.target.checked); }}
-                className={`h-4 w-4 rounded border-border accent-primary transition-transform ${neptunesTouch ? 'scale-105' : 'scale-100'}`}
-              />
-            </div>
+            <input
+              type="checkbox"
+              checked={neptunesTouch}
+              disabled={isReadOnly}
+              onChange={(e) => { if (!isReadOnly) setNeptunesTouch(e.target.checked); }}
+              className={`h-4 w-4 rounded border-border accent-primary transition-transform ${neptunesTouch ? 'scale-105' : 'scale-100'}`}
+            />
           </label>
 
-          <label className={`flex items-start gap-3 select-none ${isReadOnly ? 'cursor-default' : 'cursor-pointer'}`}>
+          <label className={`flex items-center gap-3 select-none ${isReadOnly ? 'cursor-default' : 'cursor-pointer'}`}>
             <div className="flex-1 min-w-0">
               <span className="text-xs font-medium text-foreground">Fantomská šiška</span>
-              <p className="text-[10px] text-muted-foreground/65 leading-tight mt-0.5">Zmizela beze svědků.</p>
+              <p className="text-[10px] text-muted-foreground/65 leading-tight" style={{ marginTop: '1px' }}>Zmizela beze svědků.</p>
             </div>
-            <div className="pt-0.5">
-              <input
-                type="checkbox"
-                checked={phantomCone}
-                disabled={isReadOnly}
-                onChange={(e) => { if (!isReadOnly) setPhantomCone(e.target.checked); }}
-                className={`h-4 w-4 rounded border-border accent-primary transition-transform ${phantomCone ? 'scale-105' : 'scale-100'}`}
-              />
-            </div>
+            <input
+              type="checkbox"
+              checked={phantomCone}
+              disabled={isReadOnly}
+              onChange={(e) => { if (!isReadOnly) setPhantomCone(e.target.checked); }}
+              className={`h-4 w-4 rounded border-border accent-primary transition-transform ${phantomCone ? 'scale-105' : 'scale-100'}`}
+            />
           </label>
         </div>
 
         {/* Action buttons */}
         {isReadOnly ? (
-          <div className="pt-1 space-y-2">
+          <div className="pt-2 space-y-1.5">
             <button
               onClick={handleSkip}
               className="w-full bg-muted text-muted-foreground text-sm font-semibold py-2 rounded-xl hover:bg-muted/80 transition-colors"
@@ -209,7 +202,7 @@ export function EventRatingPopup({ open, mode: modeProp, onSave, onSkip, onUndo,
             {onDelete && (
               <button
                 onClick={() => setConfirmDelete(true)}
-                className="w-full text-xs text-destructive font-medium py-1.5 hover:underline transition-colors"
+                className="w-full text-xs text-destructive font-medium py-1 hover:underline transition-colors"
               >
                 🗑 Smazat záznam
               </button>
@@ -217,7 +210,7 @@ export function EventRatingPopup({ open, mode: modeProp, onSave, onSkip, onUndo,
           </div>
         ) : (
           <>
-            <div className="flex gap-2 pt-1">
+            <div className="flex gap-2 pt-2">
               <button
                 onClick={handleSave}
                 className="flex-1 bg-primary text-primary-foreground text-sm font-semibold py-2 rounded-xl hover:opacity-90 transition-opacity"
@@ -234,7 +227,7 @@ export function EventRatingPopup({ open, mode: modeProp, onSave, onSkip, onUndo,
             {canUndo && mode === 'create' && (
               <button
                 onClick={onUndo}
-                className="w-full text-xs text-destructive font-medium py-1.5 hover:underline transition-colors"
+                className="w-full text-xs text-destructive font-medium py-1 hover:underline transition-colors"
               >
                 ↩ Zpět (smazat záznam)
               </button>
@@ -242,7 +235,7 @@ export function EventRatingPopup({ open, mode: modeProp, onSave, onSkip, onUndo,
             {mode === 'edit' && onDelete && (
               <button
                 onClick={onDelete}
-                className="w-full text-xs text-destructive font-medium py-1.5 hover:underline transition-colors"
+                className="w-full text-xs text-destructive font-medium py-1 hover:underline transition-colors"
               >
                 🗑 Odebrat záznam
               </button>
