@@ -71,9 +71,9 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
     phantom_cone: activeEvent.phantom_cone,
   } : null;
 
-  // Check if current user can delete the editing event (own event OR room owner)
+  // Check if current user can delete the active event (own event OR room owner)
   const isRoomOwner = !!user && store.roomCreatedBy === user.id;
-  const canDeleteEditingEvent = editingEventId && activeEvent ? (() => {
+  const canDeleteActiveEvent = activeEvent ? (() => {
     const eventMember = store.members.find(m => m.id === activeEvent.member_id);
     return eventMember?.user_id === user?.id || isRoomOwner;
   })() : false;
@@ -366,7 +366,10 @@ export function RoomView({ roomId, onLeave }: RoomViewProps) {
             store.undoLastEvent();
           }}
           canUndo={!!ratingEventId && !editingEventId}
-          onDelete={canDeleteEditingEvent && editingEventId ? () => handleSoftDelete(editingEventId) : undefined}
+          onDelete={canDeleteActiveEvent && activeEventId ? () => {
+            handleSoftDelete(activeEventId);
+            setViewingEventId(null);
+          } : undefined}
         />
 
         {/* Undo toast */}

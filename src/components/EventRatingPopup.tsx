@@ -6,6 +6,16 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { DiscreteSevenStepSlider } from '@/components/DiscreteSevenStepSlider';
 
 type EventRatingMode = 'create' | 'edit' | 'view';
@@ -58,6 +68,7 @@ export function EventRatingPopup({ open, mode: modeProp, onSave, onSkip, onUndo,
   const [notaryPresent, setNotaryPresent] = useState(false);
   const [neptunesTouch, setNeptunesTouch] = useState(false);
   const [phantomCone, setPhantomCone] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   useEffect(() => {
     if (editValues) {
@@ -188,13 +199,21 @@ export function EventRatingPopup({ open, mode: modeProp, onSave, onSkip, onUndo,
 
         {/* Action buttons */}
         {isReadOnly ? (
-          <div className="pt-1">
+          <div className="pt-1 space-y-2">
             <button
               onClick={handleSkip}
               className="w-full bg-muted text-muted-foreground text-sm font-semibold py-2 rounded-xl hover:bg-muted/80 transition-colors"
             >
               Zavřít
             </button>
+            {onDelete && (
+              <button
+                onClick={() => setConfirmDelete(true)}
+                className="w-full text-xs text-destructive font-medium py-1.5 hover:underline transition-colors"
+              >
+                🗑 Smazat záznam
+              </button>
+            )}
           </div>
         ) : (
           <>
@@ -231,6 +250,27 @@ export function EventRatingPopup({ open, mode: modeProp, onSave, onSkip, onUndo,
           </>
         )}
       </DialogContent>
+
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent className="max-w-[320px] rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Smazat záznam?</AlertDialogTitle>
+            <AlertDialogDescription>Tuto akci nelze vrátit zpět.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Zrušit</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => {
+                setConfirmDelete(false);
+                onDelete?.();
+              }}
+            >
+              Smazat
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Dialog>
   );
 }
