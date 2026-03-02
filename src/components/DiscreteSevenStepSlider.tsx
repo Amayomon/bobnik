@@ -60,13 +60,14 @@ export function DiscreteSevenStepSlider({
     onChange(next);
   }, [disabled, onChange, value]);
 
+  const thumbIndex = value + 3; // 0-6
+
   return (
-    <div className="space-y-0.5">
-      <div className="flex items-center justify-between text-[10px] px-0.5">
-        <span className="text-muted-foreground">{leftLabel}</span>
-        <span className="text-xs font-semibold text-foreground">{title}</span>
-        <span className="text-muted-foreground">{rightLabel}</span>
-      </div>
+    <div className="space-y-0">
+      {/* Title centered */}
+      <p className="text-xs font-bold text-foreground text-center mb-0.5">{title}</p>
+
+      {/* Slider track */}
       <div
         ref={trackRef}
         role="slider"
@@ -78,28 +79,42 @@ export function DiscreteSevenStepSlider({
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onKeyDown={handleKeyDown}
-        className={`flex gap-0.5 touch-none select-none ${disabled ? '' : 'cursor-pointer'}`}
+        className={`relative h-8 touch-none select-none ${disabled ? '' : 'cursor-pointer'}`}
       >
-        {STEPS.map(step => {
-          const isSelected = value === step;
-          const isCenter = step === 0;
-          return (
-            <div
-              key={step}
-              className={`
-                flex-1 py-1.5 text-xs font-medium rounded-md text-center transition-all pointer-events-none
-                ${isSelected
-                  ? 'bg-primary text-primary-foreground shadow-sm'
-                  : isCenter
-                    ? 'bg-muted/80 text-foreground'
-                    : 'bg-muted/40 text-muted-foreground'
-                }
-              `}
-            >
-              {step > 0 ? `+${step}` : step}
-            </div>
-          );
-        })}
+        {/* Track background */}
+        <div className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1.5 bg-muted/60 rounded-full mx-4" />
+
+        {/* Dots & thumb */}
+        <div className="absolute inset-x-4 top-0 bottom-0">
+          {STEPS.map((step, i) => {
+            const isActive = i === thumbIndex;
+            const pct = (i / 6) * 100;
+            return (
+              <div
+                key={step}
+                className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 pointer-events-none"
+                style={{ left: `${pct}%` }}
+              >
+                {isActive ? (
+                  <div
+                    className="w-8 h-8 rounded-full bg-primary flex items-center justify-center shadow-md"
+                    style={{ boxShadow: '0 2px 8px hsl(var(--primary) / 0.35)' }}
+                  >
+                    <span className="text-xs font-bold text-primary-foreground">{value}</span>
+                  </div>
+                ) : (
+                  <div className="w-2 h-2 rounded-full bg-muted-foreground/25" />
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Labels below */}
+      <div className="flex justify-between text-[10px] text-muted-foreground px-0.5 -mt-0.5">
+        <span>{leftLabel}</span>
+        <span>{rightLabel}</span>
       </div>
     </div>
   );
