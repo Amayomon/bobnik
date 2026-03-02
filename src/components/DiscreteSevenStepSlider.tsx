@@ -64,8 +64,7 @@ export function DiscreteSevenStepSlider({
 
   return (
     <div>
-      {/* Title */}
-      <p className="text-[11px] font-semibold text-foreground text-center mb-1.5">{title}</p>
+      <p className="text-[11px] font-semibold text-foreground text-center" style={{ marginBottom: '4px' }}>{title}</p>
 
       {/* Slider track – 44px tall touch target, visual centered */}
       <div
@@ -142,8 +141,7 @@ export function DiscreteSevenStepSlider({
         </div>
       </div>
 
-      {/* Labels */}
-      <div className="flex justify-between text-[9px] text-muted-foreground/40 px-0.5 mt-0.5">
+      <div className="flex justify-between text-[9px] text-muted-foreground/40 px-0.5" style={{ marginTop: '1px' }}>
         <span>{leftLabel}</span>
         <span>{rightLabel}</span>
       </div>
