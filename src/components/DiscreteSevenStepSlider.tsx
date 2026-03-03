@@ -64,7 +64,12 @@ export function DiscreteSevenStepSlider({
 
   return (
     <div>
-      <p className="text-[11px] font-semibold text-foreground text-center" style={{ marginBottom: '4px' }}>{title}</p>
+      {/* Row: leftLabel – title – rightLabel */}
+      <div className="flex items-center justify-between px-0.5" style={{ marginBottom: '2px' }}>
+        <span className="text-[9px] text-muted-foreground/50 w-12 text-left">{leftLabel}</span>
+        <span className="text-[11px] font-semibold text-foreground">{title}</span>
+        <span className="text-[9px] text-muted-foreground/50 w-12 text-right">{rightLabel}</span>
+      </div>
 
       {/* Slider track – 44px tall touch target, visual centered */}
       <div
@@ -78,11 +83,11 @@ export function DiscreteSevenStepSlider({
         onPointerDown={handlePointerDown}
         onPointerMove={handlePointerMove}
         onKeyDown={handleKeyDown}
-        className={`relative h-11 touch-none select-none ${disabled ? '' : 'cursor-pointer'}`}
+        className={`relative h-9 touch-none select-none ${disabled ? '' : 'cursor-pointer'}`}
       >
         {/* Track – soft inset */}
         <div
-          className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 rounded-full mx-3.5"
+          className="absolute inset-x-0 top-1/2 -translate-y-1/2 h-1 rounded-full mx-3"
           style={{
             background: 'hsl(var(--muted) / 0.45)',
             boxShadow: 'inset 0 1px 2px rgba(0,0,0,0.06)',
@@ -98,10 +103,10 @@ export function DiscreteSevenStepSlider({
           if (width === 0) return null;
           return (
             <div
-              className="absolute top-1/2 -translate-y-1/2 h-1 rounded-full mx-3.5"
+              className="absolute top-1/2 -translate-y-1/2 h-1 rounded-full mx-3"
               style={{
-                left: `calc(${left}% * (100% - 28px) / 100 + 14px)`,
-                width: `calc(${width}% * (100% - 28px) / 100)`,
+                left: `calc(${left}% * (100% - 24px) / 100 + 12px)`,
+                width: `calc(${width}% * (100% - 24px) / 100)`,
                 background: 'hsl(var(--primary) / 0.18)',
               }}
             />
@@ -109,7 +114,7 @@ export function DiscreteSevenStepSlider({
         })()}
 
         {/* Dots & thumb */}
-        <div className="absolute inset-x-3.5 top-0 bottom-0">
+        <div className="absolute inset-x-3 top-0 bottom-0">
           {STEPS.map((step, i) => {
             const isActive = i === thumbIndex;
             const pct = (i / 6) * 100;
@@ -121,17 +126,17 @@ export function DiscreteSevenStepSlider({
               >
                 {isActive ? (
                   <div
-                    className="h-7 min-w-[2.75rem] px-2.5 rounded-full flex items-center justify-center"
+                    className="h-6 min-w-[2.5rem] px-2 rounded-full flex items-center justify-center"
                     style={{
                       background: 'linear-gradient(to bottom, hsl(var(--primary) / 0.92), hsl(var(--primary)))',
                       boxShadow: '0 4px 12px rgba(0,0,0,0.18), 0 1px 2px rgba(0,0,0,0.12), inset 0 1px 0 rgba(255,255,255,0.25)',
                     }}
                   >
-                    <span className="text-xs font-bold text-primary-foreground drop-shadow-sm">{value}</span>
+                    <span className="text-[11px] font-bold text-primary-foreground drop-shadow-sm">{value}</span>
                   </div>
                 ) : (
                   <div
-                    className="w-[5px] h-[5px] rounded-full"
+                    className="w-[4px] h-[4px] rounded-full"
                     style={{ background: 'hsl(var(--muted-foreground) / 0.18)' }}
                   />
                 )}
@@ -139,11 +144,6 @@ export function DiscreteSevenStepSlider({
             );
           })}
         </div>
-      </div>
-
-      <div className="flex justify-between text-[9px] text-muted-foreground/40 px-0.5" style={{ marginTop: '1px' }}>
-        <span>{leftLabel}</span>
-        <span>{rightLabel}</span>
       </div>
     </div>
   );
