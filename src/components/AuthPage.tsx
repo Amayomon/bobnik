@@ -195,6 +195,14 @@ export function AuthPage() {
             {loading ? '...' : isLogin ? 'Přihlásit se' : 'Vytvořit účet'}
           </button>
 
+          {isLogin && (
+            <p className="text-center">
+              <button type="button" onClick={() => { setForgotMode(true); setError(''); setResetEmail(email); }} className="text-xs text-muted-foreground hover:text-primary transition-colors">
+                Zapomenuté heslo?
+              </button>
+            </p>
+          )}
+
           <p className="text-center text-xs text-muted-foreground">
             {isLogin ? 'Nemáš účet?' : 'Už máš účet?'}{' '}
             <button type="button" onClick={() => setIsLogin(!isLogin)} className="text-primary font-semibold">
