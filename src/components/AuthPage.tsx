@@ -39,6 +39,83 @@ export function AuthPage() {
     setLoading(false);
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setError('');
+    if (!resetEmail.trim() || !/\S+@\S+\.\S+/.test(resetEmail)) {
+      setError('Zadejte platný email.');
+      return;
+    }
+    setLoading(true);
+    await supabase.auth.resetPasswordForEmail(resetEmail, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    setResetSent(true);
+    setLoading(false);
+  };
+
+  if (resetSent) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="w-full max-w-sm bg-card rounded-2xl p-5 shadow-md text-center">
+          <span className="text-4xl mb-3 block">📧</span>
+          <h2 className="text-lg font-bold text-foreground mb-2">Zkontrolujte email</h2>
+          <p className="text-sm text-muted-foreground">
+            Pokud účet s tímto emailem existuje, poslali jsme vám odkaz pro obnovení hesla.
+          </p>
+          <button
+            onClick={() => { setResetSent(false); setForgotMode(false); }}
+            className="mt-4 text-sm text-primary font-semibold"
+          >
+            Zpět na přihlášení
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (forgotMode) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="w-full max-w-sm">
+          <div className="text-center mb-5">
+            <span className="text-4xl block mb-2">🔒</span>
+            <h1 className="text-xl font-extrabold text-foreground">Obnovení hesla</h1>
+            <p className="text-sm text-muted-foreground mt-1">
+              Zadejte email, který jste použili při registraci. Pošleme vám odkaz pro nastavení nového hesla.
+            </p>
+          </div>
+          <form onSubmit={handleForgotPassword} className="bg-card rounded-2xl p-5 shadow-md space-y-3">
+            <div>
+              <label className="text-xs font-semibold text-muted-foreground block mb-1">Email</label>
+              <input
+                type="email"
+                value={resetEmail}
+                onChange={e => setResetEmail(e.target.value)}
+                placeholder="tomas@email.cz"
+                required
+                className="w-full px-3 py-3 rounded-lg bg-muted text-foreground text-sm outline-none focus:ring-2 focus:ring-primary/30"
+              />
+            </div>
+            {error && <p className="text-xs text-destructive">{error}</p>}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full py-3 rounded-lg header-gradient text-primary-foreground font-bold text-sm disabled:opacity-60"
+            >
+              {loading ? '...' : 'Odeslat odkaz'}
+            </button>
+            <p className="text-center text-xs text-muted-foreground">
+              <button type="button" onClick={() => { setForgotMode(false); setError(''); }} className="text-primary font-semibold">
+                Zpět na přihlášení
+              </button>
+            </p>
+          </form>
+        </div>
+      </div>
+    );
+  }
+
   if (signupSuccess) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center p-4">
